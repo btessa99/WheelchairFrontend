@@ -2,11 +2,6 @@ package it.unipi.dii.msss.wheelchair;
 
 
 import android.os.Bundle;
-import android.widget.Button;
-
-
-
-
 import androidx.appcompat.app.AppCompatActivity;
 
 
