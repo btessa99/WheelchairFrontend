@@ -11,7 +11,7 @@
 
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/contribute"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="95dp"
@@ -31,7 +31,7 @@
         app:layout_constraintVertical_bias="0.0" />
 
     <Button
-        android:id="@+id/button2"
+        android:id="@+id/path"
         android:layout_width="130dp"
         android:layout_height="49dp"
         android:layout_marginTop="95dp"
@@ -51,7 +51,7 @@
         android:topLeftRadius="8dp"/>
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/explore"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="165dp"

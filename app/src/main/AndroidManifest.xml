@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="it.unipi.dii.msss.wheelchair" >
+    package="it.unipi.dii.msss.wheelchair.application" >
 
     <application
         android:allowBackup="true"
@@ -11,7 +11,7 @@
         android:theme="@style/Theme.Wheelchair" >
 
         <!--
-             TODO: Before you run your application, you need a Google Maps API key.
+             TODO: Before you run your it.unipi.dii.msss.wheelchair.application, you need a Google Maps API key.
 
              To get one, follow the directions here:
 
@@ -23,13 +23,13 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="YOUR_API_KEY" />
+            android:value="AIzaSyDEM0FFaaLAtaux54IVvpSP8RlDdJ_q-SE" />
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:exported="true"
             android:label="@string/title_activity_maps" >
             <intent-filter>
@@ -38,6 +38,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".activities.ExploreMapActivity"
+            android:exported="true"
+            android:label="ExploreMapActivity"
+            ></activity>
+
     </application>
 
 </manifest>

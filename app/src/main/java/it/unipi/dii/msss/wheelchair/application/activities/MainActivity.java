@@ -1,9 +1,8 @@
-package it.unipi.dii.msss.wheelchair;
-
+package it.unipi.dii.msss.wheelchair.application.activities;
 
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
 
+import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
