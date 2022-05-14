@@ -1,5 +1,6 @@
 package it.unipi.dii.aide.msss.myapplication;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
 import android.annotation.SuppressLint;
@@ -69,19 +70,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //find all landmarks returned and store them
                 while(jsonReader.hasNext()){
                     String key = jsonReader.nextName();
-                    if(key.equals("latitude")){
-                        latitude = jsonReader.nextDouble();
-                    }else if(key.equals("longitude")){
-                        longitude = jsonReader.nextDouble();
-                    }else if(key.equals("class")){
-                        label = jsonReader.nextString();
-                    }else{
-                        jsonReader.skipValue();
+                    switch (key) {
+                        case "latitude":
+                            latitude = jsonReader.nextDouble();
+                            break;
+                        case "longitude":
+                            longitude = jsonReader.nextDouble();
+                            break;
+                        case "class":
+                            label = jsonReader.nextString();
+                            break;
+                        default:
+                            jsonReader.skipValue();
+                            break;
                     }
 
                     if(latitude != 0.0 && longitude != 0.0 && !label.equals("")){
                         Landmark newLandmark = new Landmark(latitude,longitude,label);
                         landmarks.add(newLandmark);
+                        latitude = 0.0;
+                        longitude = 0.0;
+                        label = "";
                     }
                 }
             } else {
@@ -103,7 +112,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * installed Google Play services and returned to the app.
      */
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
 
        // Utils.initializeMap(mMap,landmarks,locationClient);
@@ -111,7 +120,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //handle clicks on map
        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
-            public void onMapClick(LatLng latLng) {
+            public void onMapClick(@NonNull LatLng latLng) {
 
                 setCamera(latLng);
 
