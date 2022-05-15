@@ -32,6 +32,9 @@ public class MainActivity extends AppCompatActivity {
                 changeActivity(MapsActivity.class);
             }
         });
+
+        //fetch landmarks from server (in background)
+        Utils.setLandmarks();
     }
 
     private void changeActivity(Class newActivity){

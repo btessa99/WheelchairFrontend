@@ -26,6 +26,7 @@ import com.google.maps.model.DirectionsStep;
 import com.google.maps.model.EncodedPolyline;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import it.unipi.dii.aide.msss.myapplication.databinding.ActivityMapsBinding;
@@ -45,7 +46,10 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(binding.getRoot());
 
         locationClient = LocationServices.getFusedLocationProviderClient(this);
-        // HTTP connection for retrieving the landmarks
+
+        //Retrieving of all landmarks
+        landmarks = Utils.getLandmarks();
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -64,7 +68,8 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         //end = get destinationLocation();
 
         //TODO: now null. We should then include the start and end destination
-        //ArrayList<Landmark> landmarks = Utils.getLandmarks(start or end);
+
+        // TODO: check if start and end of path are equals
 
         LatLng barcelona = new LatLng(41.385064,2.173403);
         mMap.addMarker(new MarkerOptions().position(barcelona).title("Marker in Barcelona"));
@@ -73,10 +78,6 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.addMarker(new MarkerOptions().position(madrid).title("Marker in Madrid"));
 
         LatLng zaragoza = new LatLng(41.648823,-0.889085);
-
-        //Define list to get all latlng for the route
-        List<LatLng> path = new ArrayList();
-
 
         //Execute Directions API request
         GeoApiContext context = new GeoApiContext.Builder()
@@ -98,25 +99,45 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 DirectionsStep step = leg.steps[j];
                                 if (step.steps != null && step.steps.length >0) {
                                     for (int k=0; k<step.steps.length;k++){
+                                        List<LatLng> path = new ArrayList<>();
+                                        HashMap<Landmark, Integer> encounteredLandmarks = new HashMap<>();
+                                        double segmentDistance = 0;
                                         DirectionsStep step1 = step.steps[k];
                                         EncodedPolyline points1 = step1.polyline;
                                         if (points1 != null) {
                                             //Decode polyline and add points to list of route coordinates
-                                            List<com.google.maps.model.LatLng> coords1 = points1.decodePath();
-                                            for (com.google.maps.model.LatLng coord1 : coords1) {
-                                                path.add(new LatLng(coord1.lat, coord1.lng));
-                                                //TODO:confronta qui posizione con uno dei landmark
-                                                //ritornati per vedere se interferisce nel percorso
+                                            List<com.google.maps.model.LatLng> polylineCoords= points1.decodePath();
+                                            LatLng first = new LatLng(polylineCoords.get(0).lat, polylineCoords.get(0).lng);
+                                            LatLng last = new LatLng(polylineCoords.get(polylineCoords.size() -1).lat, polylineCoords.get(polylineCoords.size() -1).lng);
+                                            segmentDistance = Utils.geoDistance(last, first);
+                                            if(segmentDistance == 0){
+                                                continue;
+                                            }
+                                            for (com.google.maps.model.LatLng c : polylineCoords) {
+                                                LatLng coord = new LatLng(c.lat, c.lng);
+                                                path.add(coord);
+                                                //check for each landmark if it is on the path
+                                                for(Landmark landmark: landmarks){
+                                                    if(Utils.geoDistance(coord, new LatLng(landmark.getLatitude(), landmark.getLongitude())) < 3){
+                                                        // if not already counted, count the landmark adding it to the hashmap
+                                                        if(!encounteredLandmarks.containsKey(landmark))
+                                                            encounteredLandmarks.put(landmark, 1);
+                                                    }
+                                                }
                                             }
                                         }
-                                    }
-                                } else {
-                                    EncodedPolyline points = step.polyline;
-                                    if (points != null) {
-                                        //Decode polyline and add points to list of route coordinates
-                                        List<com.google.maps.model.LatLng> coords = points.decodePath();
-                                        for (com.google.maps.model.LatLng coord : coords) {
-                                            path.add(new LatLng(coord.lat, coord.lng));
+                                        //Draw the polyline
+                                        if (path.size() > 0) {
+                                            // score: number of landmarks per kilometer
+                                            double score = (double) encounteredLandmarks.size() / segmentDistance;
+                                            PolylineOptions opts =new PolylineOptions().addAll(path).width(5);
+                                            if(score < 1) // good score, green polyline
+                                                opts.color(Color.GREEN);
+                                            else if (score < 3) //medium score, orange polyline
+                                                opts.color(Color.rgb(255, 165, 0));
+                                            else
+                                                opts.color(Color.RED);
+                                            mMap.addPolyline(opts);
                                         }
                                     }
                                 }
@@ -129,16 +150,10 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.e("myMess", ex.getLocalizedMessage());
         }
 
-        //Draw the polyline
-        if (path.size() > 0) {
-            PolylineOptions opts = new PolylineOptions().addAll(path).color(Color.BLUE).width(5);
-            mMap.addPolyline(opts);
-        }
 
         mMap.getUiSettings().setZoomControlsEnabled(true);
 
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(zaragoza, 6));
     }
-
 
 }
