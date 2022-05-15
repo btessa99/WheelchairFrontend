@@ -31,7 +31,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class ContributorActivity extends AppCompatActivity implements SensorEventListener, View.OnClickListener, LocationListener {
-    private SensorManager sensorManager;
+     private SensorManager sensorManager;
     private Sensor accelerometer, gyroscope, magnetometer, gps;
 
     private List records;
@@ -42,70 +42,16 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
     private static final String urlString = "http://127.0.0.1:12345/locations/update";
 
-    private static final int REQUEST_INTERVAL = 300000;
+    //private static final int REQUEST_INTERVAL = 300000;
+
+    private static final int REQUEST_INTERVAL = 30000;
+
+    int LOCATION_REFRESH_TIME = 5000; // 5 seconds to update
+    int LOCATION_REFRESH_DISTANCE = 1; // 1 meters to update
 
     LocationManager locationManager;
 
-    Timer timer;
-
-    private static class RequestTask extends TimerTask {
-        List records;
-
-        RequestTask(List list) {
-            this.records = list;
-        }
-
-        @Override
-        public void run() {
-            try {
-                sendRequest();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void sendRequest() throws IOException {
-
-            URL url = new URL(urlString);
-            URLConnection con = url.openConnection();
-            HttpURLConnection http = (HttpURLConnection) con;
-            http.setRequestMethod("POST"); // POST request to the flask-server
-            http.setDoOutput(true);
-
-            String serializedList = serializeRecordList();
-
-            if (serializedList.equals("")) // check if there is at least 1 record
-                return;
-
-            String jsonString = "[" + serializedList + "]"; // JSON document to send to the flask-server
-
-            byte[] out = jsonString.getBytes(StandardCharsets.UTF_8);
-            int length = out.length;
-
-            http.setFixedLengthStreamingMode(length);
-            http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            http.connect();
-            try (OutputStream os = http.getOutputStream()) {
-                os.write(out); // send the JSON to the flask-server
-            }
-        }
-
-        public String serializeRecordList() {
-            String serializedList = "";
-
-            if (records.isEmpty()) // check if there is at least 1 record
-                return "";
-
-            serializedList = (String) records.get(0);
-            records.remove(0);
-
-            for (Object r : records) {
-                serializedList = serializedList + ", " + r;
-            }
-
-            return serializedList;
-        }
-    }
+    private ScheduledExecutorService scheduleTaskExecutor;
 
     //final int REQUEST_CODE_ASK_PERMISSIONS = 123;
 
@@ -131,15 +77,18 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         }
         sensorManager = null;
 
-        timer = new Timer();
+       scheduleTaskExecutor = Executors.newScheduledThreadPool(1);
+
     }
 
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.startButton) {
+            Toast.makeText(getBaseContext(), "Starting the recording", Toast.LENGTH_LONG).show();
             records = new ArrayList<String>();
             if (sensorManager == null) {
                 sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
@@ -148,25 +97,77 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
                     //                                          int[] grantResults)
                     // to handle the case where the user grants the permission. See the documentation
                     // for ActivityCompat#requestPermissions for more details.
-                    return;
+                    //return;
                 }
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, this);
                 sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
                 sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_FASTEST);
                 sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
-                Toast.makeText(getBaseContext(), "Starting the recording ", Toast.LENGTH_LONG).show();
-                timer.scheduleAtFixedRate(new RequestTask(records), REQUEST_INTERVAL, REQUEST_INTERVAL);
+
+                scheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Do stuff here!
+/*
+                        String serializedList = serializeRecordList();
+
+                        if (serializedList.equals("")) // check if there is at least 1 record
+                            return;
+
+                        String jsonString = "[" + serializedList + "]"; // JSON document to send to the flask-server
+
+                        try {
+                            sendRequest(jsonString);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+*/
+                        //writeToFile(jsonString);
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                // Do stuff to update UI here!
+                                Toast.makeText(MainActivity.this, "Sending data to the server", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                    }
+                }, 30, 30, TimeUnit.SECONDS);
             }
+
         } else if(v.getId() == R.id.stopButton){
             Toast.makeText(getBaseContext(), "Stopping the recording", Toast.LENGTH_LONG).show();
             if(sensorManager != null) {
                 sensorManager.unregisterListener(this);
                 sensorManager = null;
-                timer.cancel();
+                Toast.makeText(getBaseContext(), "Herepepepe", Toast.LENGTH_LONG).show();
+                scheduleTaskExecutor.shutdown();
+                //writeToFile(serializeRecordList());
 
                 // TODO : Send request containing records to python server
 
+                Toast.makeText(getBaseContext(), "Here", Toast.LENGTH_LONG).show();
+/*
+                String serializedList = serializeRecordList();
+                Toast.makeText(getBaseContext(), "Here2", Toast.LENGTH_LONG).show();
+                if (serializedList.equals("")) // check if there is at least 1 record
+                    return;
+                Toast.makeText(getBaseContext(), "Here3", Toast.LENGTH_LONG).show();
 
+                String jsonString = "[" + serializedList + "]"; // JSON document to send to the flask-server
+*/
+/*
+                try {
+                    sendRequest(jsonString);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                //writeToFile(jsonString);
+
+                Toast.makeText(getBaseContext(), "Here4", Toast.LENGTH_LONG).show();
+*/
             }
         }
     }
@@ -179,10 +180,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
-
+    public void onAccuracyChanged(Sensor sensor, int accuracy) { }
 
     @Override
     public void onLocationChanged(Location location){
@@ -193,25 +191,15 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-
         if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            float deltaX = Math.abs(lastAccX - event.values[0]);
-            float deltaY = Math.abs(lastAccY - event.values[1]);
-            float deltaZ = Math.abs(lastAccZ - event.values[2]);
             lastAccX = event.values[0];
             lastAccY = event.values[1];
             lastAccZ = event.values[2];
         } else if(event.sensor.getType() == Sensor.TYPE_GYROSCOPE){
-            float deltaX = Math.abs(lastGyrX - event.values[0]);
-            float deltaY = Math.abs(lastGyrY - event.values[1]);
-            float deltaZ = Math.abs(lastGyrZ - event.values[2]);
             lastGyrX = event.values[0];
             lastGyrY = event.values[1];
             lastGyrZ = event.values[2];
         } else if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD){
-            float deltaX = Math.abs(lastMagX - event.values[0]);
-            float deltaY = Math.abs(lastMagY - event.values[1]);
-            float deltaZ = Math.abs(lastMagZ - event.values[2]);
             lastMagX = event.values[0];
             lastMagY = event.values[1];
             lastMagZ = event.values[2];
@@ -223,46 +211,69 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     public void createRecord(){
         String timestamp = new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss.SSS").format(new java.util.Date());
         String record = "{" +
-                "'timestamp': "+ timestamp + ", " +
-                "'latitude': " + lastLat + ", " +
-                "'longitude': " + lastLong + ", " +
-                "'ACC_X': " + lastAccX + ", " +
-                "'ACC_Y': " + lastAccY + ", " +
-                "'ACC_Z': " + lastAccZ + ", " +
-                "'GYR_X': " + lastGyrX + ", " +
-                "'GYR_Y': " + lastGyrY + ", " +
-                "'GYR_Z': " + lastGyrZ + ", " +
-                "'MAG_X': " + lastMagX + ", " +
-                "'MAG_Y': " + lastMagY + ", " +
-                "'MAG_Z': " + lastMagZ
-                +"}";
+                            "'timestamp': "+ timestamp + ", " +
+                            "'latitude': " + lastLat + ", " +
+                            "'longitude': " + lastLong + ", " +
+                            "'ACC_X': " + lastAccX + ", " +
+                            "'ACC_Y': " + lastAccY + ", " +
+                            "'ACC_Z': " + lastAccZ + ", " +
+                            "'GYR_X': " + lastGyrX + ", " +
+                            "'GYR_Y': " + lastGyrY + ", " +
+                            "'GYR_Z': " + lastGyrZ + ", " +
+                            "'MAG_X': " + lastMagX + ", " +
+                            "'MAG_Y': " + lastMagY + ", " +
+                            "'MAG_Z': " + lastMagZ
+                        +"}";
         records.add(record);
     }
 
+    public void sendRequest(String jsonString) throws IOException {
 
-    /*
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void checkPermissions() {
-        int hasWriteContactsPermission = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if (hasWriteContactsPermission != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_ASK_PERMISSIONS);
-            return;
+        URL url = new URL(urlString);
+        URLConnection con = url.openConnection();
+        HttpURLConnection http = (HttpURLConnection) con;
+        http.setRequestMethod("POST"); // POST request to the flask-server
+        http.setDoOutput(true);
+
+        byte[] out = jsonString.getBytes(StandardCharsets.UTF_8);
+        int length = out.length;
+
+        http.setFixedLengthStreamingMode(length);
+        http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        http.connect();
+        try (OutputStream os = http.getOutputStream()) {
+            os.write(out); // send the JSON to the flask-server
         }
-        Toast.makeText(getBaseContext(), "Permission is already granted", Toast.LENGTH_LONG).show();
     }
 
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE_ASK_PERMISSIONS:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(getBaseContext(), "Permission Granted", Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(getBaseContext(), "WRITE_EXTERNAL_STORAGE Denied", Toast.LENGTH_SHORT).show();
-                }
-                break;
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-    }*/
+    public String serializeRecordList() {
+        String serializedList = "";
 
+        if (records.isEmpty()) // check if there is at least 1 record
+            return "";
+
+        serializedList = (String) records.get(0);
+        records.remove(0);
+
+        for (Object r : records) {
+            serializedList = serializedList + ", " + r; // records concatenation
+        }
+
+        records.clear(); // removes all the element of the ArrayList
+
+        return serializedList;
+    }
+
+    public void writeToFile(String content){
+        content += '\n';
+        File path = getApplicationContext().getFilesDir();
+        Toast.makeText(getBaseContext(), "Path: " + path.getPath(), Toast.LENGTH_LONG).show();
+        try {
+            FileOutputStream writer = new FileOutputStream(new File(path,"records.csv"), true);
+            writer.write(content.getBytes());
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
