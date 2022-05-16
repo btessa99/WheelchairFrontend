@@ -1,6 +1,7 @@
-package com.example.recordapplication;
+package it.unipi.dii.aide.msss.myapplication;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
@@ -15,9 +16,14 @@ import android.os.Bundle;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -27,11 +33,13 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 
 public class ContributorActivity extends AppCompatActivity implements SensorEventListener, View.OnClickListener, LocationListener {
-     private SensorManager sensorManager;
+    private SensorManager sensorManager;
     private Sensor accelerometer, gyroscope, magnetometer, gps;
 
     private List records;
@@ -42,9 +50,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
     private static final String urlString = "http://127.0.0.1:12345/locations/update";
 
-    //private static final int REQUEST_INTERVAL = 300000;
-
-    private static final int REQUEST_INTERVAL = 30000;
+    private static final int REQUEST_INTERVAL = 30;
 
     int LOCATION_REFRESH_TIME = 5000; // 5 seconds to update
     int LOCATION_REFRESH_DISTANCE = 1; // 1 meters to update
@@ -77,7 +83,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         }
         sensorManager = null;
 
-       scheduleTaskExecutor = Executors.newScheduledThreadPool(1);
+        scheduleTaskExecutor = Executors.newScheduledThreadPool(2);
 
     }
 
@@ -87,22 +93,19 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             Toast.makeText(getBaseContext(), "Starting the recording", Toast.LENGTH_LONG).show();
             records = new ArrayList<String>();
             if (sensorManager == null) {
+                Toast.makeText(getBaseContext(), "Starting here", Toast.LENGTH_LONG).show();
                 sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    //return;
-                }
+                if(checkAndRequestPermissions())
+                    return;
+
+                Toast.makeText(getBaseContext(), "Starting here2", Toast.LENGTH_LONG).show();
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, this);
                 sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
                 sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_FASTEST);
                 sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
+
+                Toast.makeText(getBaseContext(), "Starting here3", Toast.LENGTH_LONG).show();
 
                 scheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
                     @Override
@@ -128,47 +131,57 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
                             @Override
                             public void run() {
                                 // Do stuff to update UI here!
-                                Toast.makeText(MainActivity.this, "Sending data to the server", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getBaseContext(), "Sending data to the server", Toast.LENGTH_SHORT).show();
                             }
                         });
 
                     }
-                }, 30, 30, TimeUnit.SECONDS);
+                }, REQUEST_INTERVAL, REQUEST_INTERVAL, TimeUnit.SECONDS);
+
+                Toast.makeText(getBaseContext(), "Starting here4", Toast.LENGTH_LONG).show();
             }
 
         } else if(v.getId() == R.id.stopButton){
             Toast.makeText(getBaseContext(), "Stopping the recording", Toast.LENGTH_LONG).show();
+
             if(sensorManager != null) {
+                // unregister the sensor listener
                 sensorManager.unregisterListener(this);
                 sensorManager = null;
-                Toast.makeText(getBaseContext(), "Herepepepe", Toast.LENGTH_LONG).show();
-                scheduleTaskExecutor.shutdown();
-                //writeToFile(serializeRecordList());
-
-                // TODO : Send request containing records to python server
-
-                Toast.makeText(getBaseContext(), "Here", Toast.LENGTH_LONG).show();
-/*
-                String serializedList = serializeRecordList();
-                Toast.makeText(getBaseContext(), "Here2", Toast.LENGTH_LONG).show();
-                if (serializedList.equals("")) // check if there is at least 1 record
-                    return;
-                Toast.makeText(getBaseContext(), "Here3", Toast.LENGTH_LONG).show();
-
-                String jsonString = "[" + serializedList + "]"; // JSON document to send to the flask-server
-*/
-/*
-                try {
-                    sendRequest(jsonString);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                //writeToFile(jsonString);
-
-                Toast.makeText(getBaseContext(), "Here4", Toast.LENGTH_LONG).show();
-*/
             }
+
+            if(locationManager!=null){
+                Toast.makeText(getBaseContext(), " here2", Toast.LENGTH_LONG).show();
+
+                // unregister the location listener
+                locationManager.removeUpdates(this);
+            }
+
+            Toast.makeText(getBaseContext(), " here3", Toast.LENGTH_LONG).show();
+
+            // stop the recurring task that sends the request to the flask-server
+            scheduleTaskExecutor.shutdown();
+
+            Toast.makeText(getBaseContext(), " here4", Toast.LENGTH_LONG).show();
+
+            // prepare the POST request
+            String serializedList = serializeRecordList();
+
+            if (serializedList.equals("")) // check if there is at least 1 record
+                return;
+
+            String jsonString = "[" + serializedList + "]"; // JSON document to send to the flask-server
+
+            Toast.makeText(getBaseContext(), "here", Toast.LENGTH_SHORT).show();
+/*
+            try {
+                sendRequest(jsonString);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+*/
+            writeToFile(jsonString);
+            Toast.makeText(getBaseContext(), "hereeeee", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -211,19 +224,19 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     public void createRecord(){
         String timestamp = new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss.SSS").format(new java.util.Date());
         String record = "{" +
-                            "'timestamp': "+ timestamp + ", " +
-                            "'latitude': " + lastLat + ", " +
-                            "'longitude': " + lastLong + ", " +
-                            "'ACC_X': " + lastAccX + ", " +
-                            "'ACC_Y': " + lastAccY + ", " +
-                            "'ACC_Z': " + lastAccZ + ", " +
-                            "'GYR_X': " + lastGyrX + ", " +
-                            "'GYR_Y': " + lastGyrY + ", " +
-                            "'GYR_Z': " + lastGyrZ + ", " +
-                            "'MAG_X': " + lastMagX + ", " +
-                            "'MAG_Y': " + lastMagY + ", " +
-                            "'MAG_Z': " + lastMagZ
-                        +"}";
+                "'timestamp': "+ timestamp + ", " +
+                "'latitude': " + lastLat + ", " +
+                "'longitude': " + lastLong + ", " +
+                "'ACC_X': " + lastAccX + ", " +
+                "'ACC_Y': " + lastAccY + ", " +
+                "'ACC_Z': " + lastAccZ + ", " +
+                "'GYR_X': " + lastGyrX + ", " +
+                "'GYR_Y': " + lastGyrY + ", " +
+                "'GYR_Z': " + lastGyrZ + ", " +
+                "'MAG_X': " + lastMagX + ", " +
+                "'MAG_Y': " + lastMagY + ", " +
+                "'MAG_Z': " + lastMagZ
+                +"}";
         records.add(record);
     }
 
@@ -275,5 +288,31 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean checkAndRequestPermissions() {
+        int internet = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.INTERNET);
+        int loc = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION);
+        int loc2 = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION);
+        List<String> listPermissionsNeeded = new ArrayList<>();
+
+        if (internet != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.INTERNET);
+        }
+        if (loc != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
+        if (loc2 != PackageManager.PERMISSION_GRANTED) {
+            listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (!listPermissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions((Activity) this, listPermissionsNeeded.toArray
+                    (new String[listPermissionsNeeded.size()]), 1);
+            return false;
+        }
+        return true;
     }
 }

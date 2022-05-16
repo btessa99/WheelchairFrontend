@@ -4,4 +4,6 @@
     <string name="contribute_button">Contribute</string>
     <string name="explore_button">Explore</string>
     <string name="path_button">FInd your way</string>
+    <string name="stop">stop</string>
+    <string name="start">start</string>
 </resources>
