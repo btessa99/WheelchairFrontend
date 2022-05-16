@@ -42,6 +42,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        //initialize client for getting GPS
         locationClient = LocationServices.getFusedLocationProviderClient(this);
         // HTTP connection for retrieving the landmarks
         landmarks = Utils.getLandmarks();
