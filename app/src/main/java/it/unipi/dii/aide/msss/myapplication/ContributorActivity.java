@@ -269,7 +269,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         File path = getApplicationContext().getFilesDir();
         Toast.makeText(getBaseContext(), "Path: " + path.getPath(), Toast.LENGTH_LONG).show();
         try {
-            FileOutputStream writer = new FileOutputStream(new File(path,"records.csv"), true);
+            FileOutputStream writer = new FileOutputStream(new File(path,"records.txt"), true);
             writer.write(content.getBytes());
             writer.close();
         } catch (IOException e) {
