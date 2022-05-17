@@ -26,6 +26,13 @@ public class MainActivity extends AppCompatActivity {
                 changeActivity(MapsActivity.class);
             }
         });
+
+        contributeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                changeActivity(ContributorActivity.class);
+            }
+        });
     }
 
     private void changeActivity(Class newActivity){

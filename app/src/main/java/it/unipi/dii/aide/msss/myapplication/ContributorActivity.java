@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ContributorActivity extends AppCompatActivity implements SensorEventListener, View.OnClickListener, LocationListener {
     private SensorManager sensorManager;
-    private Sensor accelerometer, gyroscope, magnetometer, gps;
+    private Sensor accelerometer, gyroscope, magnetometer;
 
     private List records;
     private float lastAccX, lastAccY, lastAccZ;
@@ -60,16 +60,14 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
     private ScheduledExecutorService scheduleTaskExecutor;
 
-    //final int REQUEST_CODE_ASK_PERMISSIONS = 123;
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contributor);
         initializeViews();
         //checkPermissions();
-
+        Toast.makeText(getBaseContext(), "Initialized contribution page", Toast.LENGTH_LONG).show();
+/*
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -85,7 +83,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         sensorManager = null;
 
         scheduleTaskExecutor = Executors.newScheduledThreadPool(2);
-
+*/
     }
 
     @Override
@@ -268,7 +266,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     }
 
     public String serializeRecordList() {
-        String serializedList = "";
+        String serializedList;
 
         if (records.isEmpty()) // check if there is at least 1 record
             return "";
@@ -317,7 +315,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
         }
         if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions((Activity) this, listPermissionsNeeded.toArray
+            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray
                     (new String[listPermissionsNeeded.size()]), 1);
             return false;
         }

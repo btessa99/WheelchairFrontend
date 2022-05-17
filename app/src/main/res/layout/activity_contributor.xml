@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/contributor"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/pisa_map"
@@ -16,15 +16,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!--android:theme="@style/Theme.RecordApplication.AppBarOverlay"-->
-
-
             <TextView
                 android:id="@+id/textView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="Your phone should stay in your pocket during the recording!"
+                android:text="@string/contributor_advices"
                 android:textColor="#E1BEE7" />
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -36,18 +33,16 @@
 
             <Button
                 android:id="@+id/startButton"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:backgroundTint="#47BA5F"
-                android:layout_weight="1"
                 android:text="@string/start" />
 
             <Button
                 android:id="@+id/stopButton"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:backgroundTint="#47BA5F"
-                android:layout_weight="1"
                 android:text="@string/stop" />
 
         </LinearLayout>
