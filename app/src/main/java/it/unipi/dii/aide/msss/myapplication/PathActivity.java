@@ -135,7 +135,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //get current position on GPS
         setCurrentPosition();
-
+        System.out.println(coordinatesStart);
 
         //map the start of the path
         LatLng startPoint = null;
@@ -144,9 +144,9 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
             startPoint = coordinatesStart;
         else {
             startPoint = new LatLng(43.416667, 10.716667); //center of Pisa
-            mMap.addMarker(new MarkerOptions().position(startPoint).title("Start"));
-        }
 
+        }
+        mMap.addMarker(new MarkerOptions().position(startPoint).title("Start"));
 
         //map the end of the path
         mMap.addMarker(new MarkerOptions().position(coordinatesEnd).title("End"));
@@ -156,7 +156,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         GeoApiContext context = new GeoApiContext.Builder()
                 .apiKey(API_KEY)
                 .build();
-        DirectionsApiRequest req = DirectionsApi.getDirections(context, coordinatesStart.latitude+","+coordinatesStart.longitude, coordinatesEnd.latitude+","+coordinatesEnd.longitude)
+        DirectionsApiRequest req = DirectionsApi.getDirections(context, startPoint.latitude+","+startPoint.longitude, coordinatesEnd.latitude+","+coordinatesEnd.longitude)
                                                 .mode(TravelMode.WALKING); //inizialize request
         try {
             DirectionsResult res = req.await();
