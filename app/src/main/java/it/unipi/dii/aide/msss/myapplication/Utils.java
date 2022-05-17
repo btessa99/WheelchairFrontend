@@ -5,6 +5,7 @@ import android.location.Location;
 import android.util.JsonReader;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
@@ -160,5 +161,17 @@ public class Utils {
         GlobalPosition posA = new GlobalPosition(pointA.latitude, pointA.longitude, 0.0);
         GlobalPosition posB = new GlobalPosition(pointB.latitude, pointB.longitude, 0.0);
         return geoCalc.calculateGeodeticCurve(reference, posB, posA).getEllipsoidalDistance();
+    }
+
+    public static LocationRequest initializeLocationRequest(){
+
+        LocationRequest req = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(30 * 1000) // set a delay in the request to make sure the GPS
+                //actually returns a location and not null
+                .setFastestInterval(5 * 1000)
+                .setNumUpdates(1);  //we need one update ony
+
+        return req;
     }
 }

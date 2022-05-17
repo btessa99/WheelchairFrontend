@@ -13,6 +13,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -55,7 +58,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FusedLocationProviderClient locationClient;
     private final String API_KEY = "AIzaSyDEM0FFaaLAtaux54IVvpSP8RlDdJ_q-SE";
 
-    LatLng coordinatesStart = new LatLng(43.724591,10.382981);
+    private LatLng coordinatesStart;
 
 
 
@@ -77,22 +80,31 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
+
     }
 
     @SuppressLint("MissingPermission")
     public void setCurrentPosition(){
 
-            locationClient.getLastLocation()
-                    .addOnSuccessListener(new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            // Got last known location. In some rare situations this can be null.
-                            if (location != null) {
-                                coordinatesStart = new LatLng(location.getLatitude(),location.getLongitude());
-                            }
 
-                        }
-                    });
+        Log.d("mytag","SON QUI");
+        LocationRequest locationRequest = Utils.initializeLocationRequest();
+
+
+        LocationCallback locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                //Location received
+                Location currentLocation = locationResult.getLastLocation();
+                coordinatesStart = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(coordinatesStart.latitude, coordinatesStart.longitude), 12.0f));
+                mMap.addMarker(new MarkerOptions().position(coordinatesStart).title("Start"));
+            }
+        };
+
+        //perform API call
+        locationClient.requestLocationUpdates(locationRequest, locationCallback, null);
         }
 
 
@@ -100,6 +112,10 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+
+        setCurrentPosition();
+
+
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(@NonNull LatLng latLng) { //calculate route to the selected destination
@@ -211,7 +227,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mMap.getUiSettings().setZoomControlsEnabled(true);
 
-        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(coordinatesEnd, 6));
+
     }
 
 }
