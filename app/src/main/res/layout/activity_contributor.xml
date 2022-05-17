@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:background="@drawable/pisa_map"
+    tools:context=".ContributorActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,8 +14,10 @@
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:theme="@style/Theme.RecordApplication.AppBarOverlay">
+            android:layout_height="wrap_content">
+
+            <!--android:theme="@style/Theme.RecordApplication.AppBarOverlay"-->
+
 
             <TextView
                 android:id="@+id/textView"
@@ -35,6 +38,7 @@
                 android:id="@+id/startButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:backgroundTint="#47BA5F"
                 android:layout_weight="1"
                 android:text="@string/start" />
 
@@ -42,6 +46,7 @@
                 android:id="@+id/stopButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:backgroundTint="#47BA5F"
                 android:layout_weight="1"
                 android:text="@string/stop" />
 
