@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">WheelChair</string>
+    <string name="app_name">WheelFlow</string>
     <string name="title_activity_maps">MapsActivity</string>
     <string name="contribute_button">Contribute</string>
     <string name="explore_button">Explore</string>
-    <string name="path_button">FInd your way</string>
+    <string name="path_button">Route</string>
 </resources>
