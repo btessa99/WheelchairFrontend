@@ -169,8 +169,8 @@ public class Utils {
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(30 * 1000) // set a delay in the request to make sure the GPS
                 //actually returns a location and not null
-                .setFastestInterval(5 * 1000)
-                .setNumUpdates(1);  //we need one update ony
+                .setFastestInterval(5 * 1000);
+                // .setNumUpdates(1);  //we need one update ony
 
         return req;
     }

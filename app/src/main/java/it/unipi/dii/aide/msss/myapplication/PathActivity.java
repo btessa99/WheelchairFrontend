@@ -93,10 +93,11 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         LocationCallback locationCallback = new LocationCallback() {
             @Override
-            public void onLocationResult(LocationResult locationResult) {
+            public void onLocationResult(@NonNull LocationResult locationResult) {
                 super.onLocationResult(locationResult);
                 //Location received
                 Location currentLocation = locationResult.getLastLocation();
+                Log.d("currentLocation", currentLocation.toString());
                 coordinatesStart = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(coordinatesStart.latitude, coordinatesStart.longitude), 12.0f));
                 mMap.addMarker(new MarkerOptions().position(coordinatesStart).title("Start"));
@@ -105,15 +106,17 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //perform API call
         locationClient.requestLocationUpdates(locationRequest, locationCallback, null);
+        Log.d("clientCall", locationClient.toString());
         }
 
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(@NonNull GoogleMap googleMap) {
 
         mMap = googleMap;
 
         setCurrentPosition();
+        System.out.println(coordinatesStart);
 
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -135,10 +138,14 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         //get current position on GPS
         setCurrentPosition();
 
-
+        LatLng startPoint = null;
         //map the start of the path
-         mMap.addMarker(new MarkerOptions().position(coordinatesStart).title("Start"));
+        if(coordinatesStart != null)
+            startPoint = coordinatesStart;
+        else
+            startPoint = new LatLng(43.416667, 10.716667);
 
+        mMap.addMarker(new MarkerOptions().position(startPoint).title("Start"));
 
         //map the end of the path
         mMap.addMarker(new MarkerOptions().position(coordinatesEnd).title("Start"));
@@ -148,7 +155,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         GeoApiContext context = new GeoApiContext.Builder()
                 .apiKey(API_KEY)
                 .build();
-        DirectionsApiRequest req = DirectionsApi.getDirections(context, coordinatesStart.latitude+","+coordinatesStart.longitude, coordinatesEnd.latitude+","+coordinatesEnd.longitude)
+        DirectionsApiRequest req = DirectionsApi.getDirections(context, startPoint.latitude+","+startPoint.longitude, coordinatesEnd.latitude+","+coordinatesEnd.longitude)
                                                 .mode(TravelMode.WALKING); //inizialize request
         try {
             DirectionsResult res = req.await();
