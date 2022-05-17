@@ -72,48 +72,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    @SuppressLint("MissingPermission")
-    private void enableMyLocation() {
-        // 1. Check if permissions are granted, if so, enable the my location layer
-        Object permission = null;
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED
-                || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            mMap.setMyLocationEnabled(true);
-            Log.d("mytag","PERMISSION ACCEPTED");
-            return;
-        }
-        Log.d("mytag","PERMISSION NOT ACCEPTED");
 
-        // 2. Otherwise, request location permissions from the user.
-        ActivityResultLauncher<String[]> locationPermissionRequest =
-                registerForActivityResult(new ActivityResultContracts
-                                .RequestMultiplePermissions(), result -> {
-                            Boolean fineLocationGranted = result.getOrDefault(
-                                    Manifest.permission.ACCESS_FINE_LOCATION, false);
-                            Boolean coarseLocationGranted = result.getOrDefault(
-                                    Manifest.permission.ACCESS_COARSE_LOCATION,false);
-                            if (fineLocationGranted != null && fineLocationGranted) {
-                                // Precise location access granted.
-                            } else if (coarseLocationGranted != null && coarseLocationGranted) {
-                                // Only approximate location access granted.
-                            } else {
-                                // No location access granted.
-                            }
-                        }
-                );
-
-// ...
-
-// Before you perform the actual permission request, check whether your app
-// already has the permissions, and whether your app needs to show a permission
-// rationale dialog. For more details, see Request permissions.
-        locationPermissionRequest.launch(new String[] {
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-        });
-    }
 
     /**
      * Manipulates the map once available.
@@ -123,11 +82,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
      */
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
-
-        enableMyLocation();
 
         mMap.getUiSettings().setZoomControlsEnabled(true);
 

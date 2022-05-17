@@ -1,8 +1,17 @@
 package it.unipi.dii.aide.msss.myapplication;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.util.JsonReader;
+import android.util.Log;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
@@ -174,4 +183,6 @@ public class Utils {
 
         return req;
     }
+
+
 }
