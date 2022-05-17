@@ -28,6 +28,7 @@ import it.unipi.dii.aide.msss.myapplication.entities.Landmark;
 public class Utils {
     private static class RetrieveLandmarks implements Callable<ArrayList<Landmark>> {
 
+        private final String url = "https://0a52-5-171-214-141.eu.ngrok.io/locations/inaccessible";
         @Override
         public ArrayList<Landmark> call() throws Exception {
             return fetchLandmarks();
@@ -36,7 +37,7 @@ public class Utils {
         private ArrayList<Landmark> fetchLandmarks() {
             ArrayList<Landmark> landmarks = new ArrayList<>();
             try {
-                URL serverEndpoint = new URL("http://127.0.0.1:12345/locations/inaccessible");
+                URL serverEndpoint = new URL(url);
                 HttpURLConnection connection = (HttpURLConnection) serverEndpoint.openConnection();
                 connection.setRequestProperty("User-Agent", "my-rest-app-v0.1");
 

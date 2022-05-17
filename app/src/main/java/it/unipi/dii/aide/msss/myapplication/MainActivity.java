@@ -16,20 +16,38 @@ public class MainActivity extends AppCompatActivity {
     Button contributeButton;
     Button routingButton;
     Button exploreButton;
-    final int REQUEST_CODE_ASK_PERMISSIONS = 123;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         contributeButton = (Button) findViewById(R.id.contribute);
+
         routingButton = (Button) findViewById(R.id.path);
+
         exploreButton = (Button) findViewById(R.id.explore);
 
+
+        //initialize buttons
         exploreButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 changeActivity(MapsActivity.class);
+            }
+        });
+
+        routingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                changeActivity(PathActivity.class);
+            }
+        });
+
+        contributeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                changeActivity(ContributeActivity.class);
             }
         });
 

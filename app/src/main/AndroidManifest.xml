@@ -4,6 +4,8 @@
     package="it.unipi.dii.aide.msss.myapplication">
 
 
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -38,6 +40,14 @@
             android:name=".MapsActivity"
             android:exported="true"
             android:label="@string/title_activity_maps" />
+        <activity
+            android:name=".PathActivity"
+            android:exported="true"
+            android:label="PathActivity" />
+        <activity
+            android:name=".ContributeActivity"
+            android:exported="true"
+            android:label="ContributeActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

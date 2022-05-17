@@ -53,10 +53,10 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ActivityMapsBinding binding;
     private ArrayList<Landmark> landmarks = new ArrayList<>();
     private FusedLocationProviderClient locationClient;
+    private final String API_KEY = "AIzaSyDEM0FFaaLAtaux54IVvpSP8RlDdJ_q-SE";
 
-    LatLng coordinatesStart;
-    TextView start;
-    TextView end;
+    LatLng coordinatesStart = new LatLng(43.724591,10.382981);
+
 
 
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,10 +77,6 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        //initialize text view
-        //TODO: replace with actual names
-        start = (findViewById(R.id.map));
-        end = (findViewById(R.id.map));
     }
 
     @SuppressLint("MissingPermission")
@@ -132,29 +128,22 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.addMarker(new MarkerOptions().position(coordinatesEnd).title("Start"));
 
 
-        // get API KEY from local properties
-        Properties props = new Properties();
-        String apikey = "";
-        try {
-            props.load(new FileInputStream(new File("local.properties")));
-            apikey = props.getProperty("MAPS_API_KEY");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         //Execute Directions API request
         GeoApiContext context = new GeoApiContext.Builder()
-                .apiKey(apikey)
+                .apiKey(API_KEY)
                 .build();
         DirectionsApiRequest req = DirectionsApi.getDirections(context, coordinatesStart.latitude+","+coordinatesStart.longitude, coordinatesEnd.latitude+","+coordinatesEnd.longitude)
                                                 .mode(TravelMode.WALKING); //inizialize request
         try {
             DirectionsResult res = req.await();
-
+            System.out.println("son qui");
+            System.out.println("len " + res.routes.length);
             //Loop through legs and steps to get encoded polylines of each step
             if (res.routes != null && res.routes.length > 0) {
+
                 DirectionsRoute route = res.routes[0];
                 if (route.legs !=null) {
+                    System.out.println("len legs" + route.legs.length);
                     for(int i=0; i<route.legs.length; i++) {
                         DirectionsLeg leg = route.legs[i];
                         if (leg.steps != null) {

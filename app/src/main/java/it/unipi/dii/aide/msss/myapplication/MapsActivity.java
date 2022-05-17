@@ -7,11 +7,13 @@ import android.annotation.SuppressLint;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.JsonReader;
+import android.util.Log;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -27,7 +29,7 @@ import java.util.ArrayList;
 import it.unipi.dii.aide.msss.myapplication.databinding.ActivityMapsBinding;
 import it.unipi.dii.aide.msss.myapplication.entities.Landmark;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationSource.OnLocationChangedListener {
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
@@ -50,6 +52,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
     }
 
     /**
@@ -64,6 +67,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
+
+        mMap.getUiSettings().setZoomControlsEnabled(true);
 
        // Utils.initializeMap(mMap,landmarks,locationClient);
 
@@ -94,9 +99,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     //gets currents GPS position
+
+
     @SuppressLint("MissingPermission")
     private void setGpsLocation(){
 
+        Log.d("mytag","SON QUI");
         locationClient.getLastLocation()
                 .addOnSuccessListener(new OnSuccessListener<Location>() {
                     @Override
@@ -105,6 +113,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         if (location != null) {
                             LatLng position = new LatLng(location.getLatitude(),location.getLongitude());
                             setCamera(position);
+                            Log.d("mytag","SON QUI SUCCESSO");
                         }
 
                     }
@@ -115,5 +124,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setCamera(LatLng currentPosition){
 
         mMap.moveCamera(CameraUpdateFactory.newLatLng(currentPosition));
+    }
+
+    @Override
+    public void onLocationChanged(@NonNull Location location) {
+        setCamera(new LatLng(location.getLatitude(),location.getLongitude()));
+        Log.d("mytag","SON QUI SUCCESSO");
     }
 }
