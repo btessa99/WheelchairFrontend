@@ -82,8 +82,6 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         }
         sensorManager = null;
 
-        scheduleTaskExecutor = Executors.newScheduledThreadPool(2);
-
         if (android.os.Build.VERSION.SDK_INT > 9) {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(policy);
@@ -118,6 +116,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
                 Log.d("TEST", "initialized sensors and location manager");
 
+                scheduleTaskExecutor = Executors.newScheduledThreadPool(2);
                 scheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
                     @Override
                     public void run() {
