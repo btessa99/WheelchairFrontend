@@ -49,7 +49,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ArrayList<Landmark> landmarks = new ArrayList<>();
     private FusedLocationProviderClient locationClient;
     private LatLng location = new LatLng(43.724591,10.382981);
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private boolean permissionDenied = false;
     private LocationRequest locationRequest;
 
@@ -74,7 +73,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     }
-
 
 
     /**
