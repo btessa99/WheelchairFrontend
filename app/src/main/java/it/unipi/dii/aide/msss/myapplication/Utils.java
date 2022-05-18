@@ -17,6 +17,8 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -59,7 +61,7 @@ public class Utils {
                     jsonReader.beginObject();
                     double latitude = 0.0;
                     double longitude = 0.0;
-                    String label = "";
+                    int label = 0, bound = 0;
                     //find all landmarks returned and store them
                     while (jsonReader.hasNext()) {
                         String key = jsonReader.nextName();
@@ -70,22 +72,31 @@ public class Utils {
                             case "longitude":
                                 longitude = jsonReader.nextDouble();
                                 break;
-                            case "class":
-                                label = jsonReader.nextString();
+                            case "score":
+                                label = jsonReader.nextInt();
+                                break;
+                            case "bound":
+                                bound = jsonReader.nextInt();
                                 break;
                             default:
                                 jsonReader.skipValue();
                                 break;
                         }
 
-                        if (latitude != 0.0 && longitude != 0.0 && !label.equals("")) {
-                            Landmark newLandmark = new Landmark(latitude, longitude, label);
+                        if (latitude != 0.0 && longitude != 0.0 && label != 0 && bound  != 0) {
+                            Landmark newLandmark = new Landmark(latitude, longitude, label, bound);
                             landmarks.add(newLandmark);
+                            latitude = longitude = 0.0;
+                            label = bound = 0;
                         }
                     }
                 } else {
                     // Error handling code goes here
                     System.out.println("server not reachable");
+                    // test landmarks
+                    landmarks.add(new Landmark(44.04633, 10.06371, 54, 55));
+                    landmarks.add(new Landmark(44.05, 10.06, 32, 77)); // Gelateria enzo, great peanut Ice Cream
+                    landmarks.add(new Landmark(37.401437,-116.86773, 833334, 833334));
                 }
             }catch (Exception e){e.printStackTrace();}
 
@@ -131,7 +142,22 @@ public class Utils {
         //set Landmarks on the Map
         for(Landmark landmark: landmarks) {
             LatLng position = new LatLng(landmark.getLatitude(), landmark.getLongitude());
-            mMap.addMarker(new MarkerOptions().position(position).title(landmark.getLabel()));
+            // score computation
+            double score = landmark.getScore();
+            double bound = landmark.getBound();
+            double finalScore = Math.abs(score / bound);
+
+            // change the color of the landmark depending on the score:
+            // below 0.7 orange, ahead 0.7 red
+            BitmapDescriptor bitmapDescriptor;
+
+            MarkerOptions options = new MarkerOptions().position(position);
+            if(finalScore < 0.7)
+                bitmapDescriptor = BitmapDescriptorFactory.defaultMarker((int) BitmapDescriptorFactory.HUE_ORANGE);
+            else
+                bitmapDescriptor = BitmapDescriptorFactory.defaultMarker((int) BitmapDescriptorFactory.HUE_RED);
+            options.icon(bitmapDescriptor);
+            mMap.addMarker(options);
         }
 
 

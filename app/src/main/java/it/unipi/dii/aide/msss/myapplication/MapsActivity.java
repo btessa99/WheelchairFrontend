@@ -26,7 +26,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 
@@ -110,7 +113,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //set Landmarks on the Map
         for(Landmark landmark: landmarks) {
             LatLng position = new LatLng(landmark.getLatitude(), landmark.getLongitude());
-            mMap.addMarker(new MarkerOptions().position(position).title(landmark.getLabel()));
+            // score computation
+            double score = landmark.getScore();
+            double bound = landmark.getBound();
+            double finalScore = Math.abs(score / bound);
+
+            // change the color of the landmark depending on the score:
+            // below 0.7 orange, ahead 0.7 red
+            BitmapDescriptor bitmapDescriptor;
+            MarkerOptions options = new MarkerOptions().position(position);
+            if(finalScore < 0.7)
+                bitmapDescriptor = BitmapDescriptorFactory.defaultMarker((int) BitmapDescriptorFactory.HUE_ORANGE);
+            else
+                bitmapDescriptor = BitmapDescriptorFactory.defaultMarker((int) BitmapDescriptorFactory.HUE_RED);
+            options.icon(bitmapDescriptor);
+            mMap.addMarker(options);
         }
 
 
