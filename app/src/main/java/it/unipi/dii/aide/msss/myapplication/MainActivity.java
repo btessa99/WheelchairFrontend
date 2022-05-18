@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -36,8 +37,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void changeActivity(Class newActivity){
-
+        Log.d("TEST", "primo log");
         Intent intent = new Intent(MainActivity.this,newActivity);
+        Log.d("TEST", "secondo log");
         startActivity(intent);
+        Log.d("TEST", "terzo log");
     }
 }

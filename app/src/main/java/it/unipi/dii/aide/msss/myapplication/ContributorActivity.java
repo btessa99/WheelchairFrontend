@@ -19,6 +19,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.os.StrictMode;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -43,13 +45,13 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     private SensorManager sensorManager;
     private Sensor accelerometer, gyroscope, magnetometer;
 
-    private List records;
+    private List<String> records;
     private float lastAccX, lastAccY, lastAccZ;
     private float lastGyrX, lastGyrY, lastGyrZ;
     private float lastMagX, lastMagY, lastMagZ;
     private double lastLat, lastLong;
 
-    private static final String urlString = "http://127.0.0.1:12345/locations/update";
+    private static final String urlString = "https://aec0-78-13-144-147.eu.ngrok.io/locations/update";
 
     private static final int REQUEST_INTERVAL = 30;
 
@@ -65,9 +67,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contributor);
         initializeViews();
-        //checkPermissions();
-        Toast.makeText(getBaseContext(), "Initialized contribution page", Toast.LENGTH_LONG).show();
-/*
+
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -83,55 +83,50 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         sensorManager = null;
 
         scheduleTaskExecutor = Executors.newScheduledThreadPool(2);
-*/
+
+        if (android.os.Build.VERSION.SDK_INT > 9) {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(policy);
+        }
+
     }
 
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.startButton) {
             Toast.makeText(getBaseContext(), "Starting the recording", Toast.LENGTH_LONG).show();
-            records = new ArrayList<String>();
+            Log.d("TEST", "Starting the recording");
+            records = new ArrayList<>();
             if (sensorManager == null) {
-                Toast.makeText(getBaseContext(), "Starting here", Toast.LENGTH_LONG).show();
+                Log.d("TEST", "Initializing sensor manager");
+
                 sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-                Toast.makeText(getBaseContext(), "Starting here2", Toast.LENGTH_LONG).show();
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
+                    Log.d("TEST", "Permissions are not granted, asking permissions");
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION} , 1);
+
+
                     return;
                 }
+                Log.d("TEST", "Permissions ok");
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, this);
-                sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
-                sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_FASTEST);
-                sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
+                sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
 
-                Toast.makeText(getBaseContext(), "Starting here3", Toast.LENGTH_LONG).show();
+
+                Log.d("TEST", "initialized sensors and location manager");
 
                 scheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
                     @Override
                     public void run() {
                         // Do stuff here!
-/*
-                        String serializedList = serializeRecordList();
+                        Log.d("TEST", "inside run()");
 
-                        if (serializedList.equals("")) // check if there is at least 1 record
-                            return;
+                        //sendRecordsToServer();
 
-                        String jsonString = "[" + serializedList + "]"; // JSON document to send to the flask-server
-
-                        try {
-                            sendRequest(jsonString);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-*/
-                        //writeToFile(jsonString);
+                        //writeToFile();
 
                         runOnUiThread(new Runnable() {
                             @Override
@@ -143,51 +138,34 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
                     }
                 }, REQUEST_INTERVAL, REQUEST_INTERVAL, TimeUnit.SECONDS);
-
-                Toast.makeText(getBaseContext(), "Starting here4", Toast.LENGTH_LONG).show();
             }
 
         } else if(v.getId() == R.id.stopButton){
+            Log.d("TEST", "STOP contribution");
+
             Toast.makeText(getBaseContext(), "Stopping the recording", Toast.LENGTH_LONG).show();
 
             if(sensorManager != null) {
                 // unregister the sensor listener
                 sensorManager.unregisterListener(this);
                 sensorManager = null;
+                Log.d("TEST", "unregistered the sensor listener");
             }
 
             if(locationManager!=null){
-                Toast.makeText(getBaseContext(), " here2", Toast.LENGTH_LONG).show();
-
                 // unregister the location listener
                 locationManager.removeUpdates(this);
+                Log.d("TEST", "unregistered the location listener");
             }
-
-            Toast.makeText(getBaseContext(), " here3", Toast.LENGTH_LONG).show();
 
             // stop the recurring task that sends the request to the flask-server
             scheduleTaskExecutor.shutdown();
 
-            Toast.makeText(getBaseContext(), " here4", Toast.LENGTH_LONG).show();
+            Log.d("TEST", "shut down the schedule task executor");
 
-            // prepare the POST request
-            String serializedList = serializeRecordList();
+            sendRecordsToServer();
 
-            if (serializedList.equals("")) // check if there is at least 1 record
-                return;
-
-            String jsonString = "[" + serializedList + "]"; // JSON document to send to the flask-server
-
-            Toast.makeText(getBaseContext(), "here", Toast.LENGTH_SHORT).show();
-/*
-            try {
-                sendRequest(jsonString);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-*/
-            writeToFile(jsonString);
-            Toast.makeText(getBaseContext(), "hereeeee", Toast.LENGTH_SHORT).show();
+            writeToFile();
         }
     }
 
@@ -210,6 +188,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        //Log.d("EVENT", event.sensor.getStringType());
         if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             lastAccX = event.values[0];
             lastAccY = event.values[1];
@@ -223,7 +202,6 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             lastMagY = event.values[1];
             lastMagZ = event.values[2];
         } else return;
-
         createRecord();
     }
 
@@ -244,15 +222,30 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
                 "'MAG_Z': " + lastMagZ
                 +"}";
         records.add(record);
+        //Log.d("RECORD", record);
     }
 
-    public void sendRequest(String jsonString) throws IOException {
+    public void sendRecordsToServer(){
 
+        String jsonString = serializeRecordList(); // prepare the POST body
+
+        if (jsonString.equals("")) // check if there is at least 1 record
+            return;
+
+        try {
+            sendRequest(jsonString);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void sendRequest(String jsonString) throws IOException {
+        Log.d("TEST", "sending POST request to server");
         URL url = new URL(urlString);
         URLConnection con = url.openConnection();
         HttpURLConnection http = (HttpURLConnection) con;
-        http.setRequestMethod("POST"); // POST request to the flask-server
         http.setDoOutput(true);
+        http.setRequestMethod("POST"); // POST request to the flask-server
+
 
         byte[] out = jsonString.getBytes(StandardCharsets.UTF_8);
         int length = out.length;
@@ -268,6 +261,9 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     public String serializeRecordList() {
         String serializedList;
 
+        Log.d("TEST", "serializing " + records.size() + " records");
+
+        //Log.d("PRINT", String.valueOf(records));
         if (records.isEmpty()) // check if there is at least 1 record
             return "";
 
@@ -280,13 +276,14 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
         records.clear(); // removes all the element of the ArrayList
 
-        return serializedList;
+        return "{'data': [" + serializedList + "]}";
     }
 
-    public void writeToFile(String content){
-        content += '\n';
+    public void writeToFile(){
+        Log.d("TEST", "writing records to file");
+        String content = serializeRecordList() + '\n';
         File path = getApplicationContext().getFilesDir();
-        Toast.makeText(getBaseContext(), "Path: " + path.getPath(), Toast.LENGTH_LONG).show();
+
         try {
             FileOutputStream writer = new FileOutputStream(new File(path,"records.txt"), true);
             writer.write(content.getBytes());
@@ -296,29 +293,27 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         }
     }
 
-    public boolean checkAndRequestPermissions() {
-        int internet = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.INTERNET);
-        int loc = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION);
-        int loc2 = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION);
-        List<String> listPermissionsNeeded = new ArrayList<>();
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case 1: { // request multiple permissions
+                if (grantResults.length > 0) {
+                    for (int i = 0; i < permissions.length; i++) {
+                        if (permissions[i].equals(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                                Log.e("TEST", "ACCESS_COARSE_LOCATION granted>");
 
-        if (internet != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(Manifest.permission.INTERNET);
+                            }
+                        } else if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                                Log.e("msg", "ACCESS_FINE_LOCATION granted");
+                            }
+                        }
+                    }
+                }
+            }
         }
-        if (loc != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-        }
-        if (loc2 != PackageManager.PERMISSION_GRANTED) {
-            listPermissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        }
-        if (!listPermissionsNeeded.isEmpty()) {
-            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray
-                    (new String[listPermissionsNeeded.size()]), 1);
-            return false;
-        }
-        return true;
     }
+
 }
