@@ -14,8 +14,12 @@
         android:id="@+id/contribute"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="60dp"
-        android:layout_marginTop="36dp"
+
+        android:layout_marginStart="64dp"
+        android:layout_marginTop="95dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="385dp"
+
         android:backgroundTint="#47BA5F"
         android:bottomLeftRadius="8dp"
         android:bottomRightRadius="8dp"
@@ -24,15 +28,21 @@
         android:textColor="@color/white"
         android:topLeftRadius="8dp"
         android:topRightRadius="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/path"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:layout_constraintVertical_bias="0.0" />
 
     <Button
         android:id="@+id/path"
         android:layout_width="130dp"
         android:layout_height="49dp"
-        android:layout_marginTop="36dp"
-        android:layout_marginEnd="36dp"
+
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="95dp"
+        android:layout_marginEnd="64dp"
+        android:layout_marginBottom="385dp"
         android:backgroundTint="#47BA5F"
         android:bottomLeftRadius="8dp"
         android:bottomRightRadius="8dp"
@@ -41,8 +51,12 @@
         android:textColor="@color/white"
         android:topLeftRadius="8dp"
         android:topRightRadius="8dp"
+
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
+        app:layout_constraintStart_toEndOf="@+id/contribute"
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:layout_constraintVertical_bias="0.0" />
 
     <Button
         android:id="@+id/explore"
@@ -59,22 +73,28 @@
         android:textColor="@color/white"
         android:topLeftRadius="8dp"
         android:topRightRadius="8dp"
+
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.303"
+        app:layout_constraintHorizontal_bias="0.59"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/path" />
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="301dp"
-        android:layout_height="89dp"
-        android:layout_marginStart="72dp"
-        android:layout_marginTop="120dp"
+        android:layout_width="wrap_content"
+        android:layout_height="77dp"
+        android:layout_marginStart="64dp"
+        android:layout_marginTop="128dp"
+        android:layout_marginEnd="64dp"
         android:fontFamily="@font/biryani_bold"
         android:text="@string/app_name"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         android:textColor="#001C06"
         android:textSize="48sp"
+        app:layout_constraintBottom_toTopOf="@+id/contribute"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

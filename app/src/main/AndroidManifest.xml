@@ -4,10 +4,13 @@
     package="it.unipi.dii.aide.msss.myapplication">
 
 
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" />
+    <uses-feature android:name="android.hardware.location.network" />
 
     <application
         android:allowBackup="true"
@@ -22,7 +25,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" />
+            android:value="AIzaSyDEM0FFaaLAtaux54IVvpSP8RlDdJ_q-SE" />
 
         <activity
             android:name=".MapsActivity"
@@ -33,9 +36,9 @@
             android:exported="true"
             android:label="PathActivity" />
         <activity
-            android:name=".ContributeActivity"
-            android:exported="true"
-            android:label="ContributeActivity" />
+            android:name=".ContributorActivity"
+            android:exported="false"
+            android:label="@string/title_activity_contributor" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -47,6 +50,5 @@
             </intent-filter>
         </activity>
     </application>
-
 
 </manifest>

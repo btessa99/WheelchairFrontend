@@ -45,6 +45,10 @@ android {
     buildFeatures {
         viewBinding true
     }
+    packagingOptions {
+        exclude 'META-INF/INDEX.LIST'
+        exclude "META-INF/io.netty.versions.properties"
+    }
 }
 
 dependencies {

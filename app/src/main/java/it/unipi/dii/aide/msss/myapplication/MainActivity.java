@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
         contributeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                changeActivity(ContributeActivity.class);
+                changeActivity(ContributorActivity.class);
             }
         });
 
@@ -64,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void changeActivity(Class newActivity){
-
         Intent intent = new Intent(MainActivity.this,newActivity);
         startActivity(intent);
     }
