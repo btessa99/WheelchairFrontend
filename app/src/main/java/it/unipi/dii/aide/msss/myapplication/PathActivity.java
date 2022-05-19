@@ -172,7 +172,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
                                         System.out.println("add to path: " + coord.longitude + "," + coord.longitude);
                                         for(Landmark landmark: landmarks){
                                             if(!encounteredLandmarks.containsKey(landmark)) //check for each landmark if it is on the path
-                                            if(Utils.geoDistance(coord, new LatLng(landmark.getLatitude(), landmark.getLongitude())) < 0.003) { //check if landmark is close enough to that position
+                                            if(Utils.geoDistance(coord, new LatLng(landmark.getLatitude(), landmark.getLongitude())) < 10) { //check if landmark is close enough to that position
                                                 // if not already counted, count the landmark adding it to the hashmap
                                                 encounteredLandmarks.put(landmark, 1);
                                                 mMap.addMarker(new MarkerOptions().position(coord));
@@ -186,7 +186,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 if (path.size() > 0) {
                                     // score: number of landmarks per kilometer
                                     System.out.println("path > 0 " + path.size());
-                                    double score = (double) encounteredLandmarks.size() / segmentDistance;
+                                    double score = (double) encounteredLandmarks.size() / (double) segmentDistance * 1000;
                                     PolylineOptions opts =new PolylineOptions().addAll(path).width(15);
                                     if(score < 1) // good score, green polyline
                                         opts.color(Color.GREEN);
