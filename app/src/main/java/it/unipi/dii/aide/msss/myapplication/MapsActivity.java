@@ -49,7 +49,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ArrayList<Landmark> landmarks = new ArrayList<>();
     private FusedLocationProviderClient locationClient;
     private LatLng location = new LatLng(43.724591,10.382981);
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private boolean permissionDenied = false;
     private LocationRequest locationRequest;
 
@@ -60,21 +59,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        Log.d("mytag","qui0");
+
 
         //initialize client for getting GPS
         locationClient = LocationServices.getFusedLocationProviderClient(this);
         // HTTP connection for retrieving the landmarks
         landmarks = Utils.getLandmarks();
+        Log.d("mytag","qui " + landmarks.size());
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        if(mMap != null) {
+            System.out.println(
+                    "pronto"
+            );
+            setGpsLocation();
+        }
 
 
 
     }
-
 
 
     /**
@@ -110,8 +117,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void placeLandmarks(){
 
+        System.out.println(landmarks);
+        Log.d("connect", String.valueOf(landmarks.size()));
+
         //set Landmarks on the Map
         for(Landmark landmark: landmarks) {
+
             LatLng position = new LatLng(landmark.getLatitude(), landmark.getLongitude());
             // score computation
             double score = landmark.getScore();
@@ -141,7 +152,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // initialize parameters for location request
 
         Log.d("mytag","SON QUI");
-        locationRequest = Utils.initializeLocationRequest();
+        locationRequest = Utils.initializeLocationRequest(true);
+        Log.d("mytag",locationRequest.toString());
 
 
         LocationCallback locationCallback = new LocationCallback() {
@@ -152,7 +164,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Log.d("mytag",locationResult.getLastLocation().toString());
                 Location currentLocation = locationResult.getLastLocation();
                 LatLng currentCoordinates = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentCoordinates.latitude, currentCoordinates.longitude), 12.0f));
+                //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentCoordinates.latitude, currentCoordinates.longitude), 12.0f));
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.latitude, location.longitude), 12.0f));
             }
         };
 

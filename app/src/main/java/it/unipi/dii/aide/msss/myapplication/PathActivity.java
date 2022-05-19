@@ -58,7 +58,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
     private FusedLocationProviderClient locationClient;
     private final String API_KEY = "AIzaSyDEM0FFaaLAtaux54IVvpSP8RlDdJ_q-SE";
 
-    private LatLng coordinatesStart;
+    private LatLng coordinatesStart =  new LatLng(43.724591,10.382981);
 
 
 
@@ -80,33 +80,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
-
     }
-
-    @SuppressLint("MissingPermission")
-    public void setCurrentPosition(){
-
-
-        Log.d("mytag","SON QUI");
-        LocationRequest locationRequest = Utils.initializeLocationRequest();
-        Log.d("mytag",locationRequest.toString());
-
-        LocationCallback locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                super.onLocationResult(locationResult);
-                //Location received
-                Location currentLocation = locationResult.getLastLocation();
-                coordinatesStart = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(coordinatesStart.latitude, coordinatesStart.longitude), 12.0f));
-                mMap.addMarker(new MarkerOptions().position(coordinatesStart).title("Start"));
-                System.out.println(coordinatesStart.latitude + " " + coordinatesStart.longitude);
-            }
-        };
-
-        //perform API call
-        locationClient.requestLocationUpdates(locationRequest, locationCallback, null);
-        }
 
 
     @Override
@@ -134,7 +108,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void designRoute(LatLng coordinatesEnd){
 
         //get current position on GPS
-        setCurrentPosition();
+        //setCurrentPosition();
         System.out.println(coordinatesStart);
 
         //map the start of the path
@@ -142,10 +116,10 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         //map the start of the path
         if(coordinatesStart != null)
             startPoint = coordinatesStart;
-        else {
+        else
             startPoint = new LatLng(43.416667, 10.716667); //center of Pisa
 
-        }
+
         mMap.addMarker(new MarkerOptions().position(startPoint).title("Start"));
 
         //map the end of the path
@@ -157,71 +131,72 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .apiKey(API_KEY)
                 .build();
         DirectionsApiRequest req = DirectionsApi.getDirections(context, startPoint.latitude+","+startPoint.longitude, coordinatesEnd.latitude+","+coordinatesEnd.longitude)
-                                                .mode(TravelMode.WALKING); //inizialize request
+                .mode(TravelMode.WALKING); //inizialize request
         try {
             DirectionsResult res = req.await();
-            System.out.println("son qui");
-            System.out.println("len " + res.routes.length);
             //Loop through legs and steps to get encoded polylines of each step
             if (res.routes != null && res.routes.length > 0) {
-
+                System.out.println("routes");
                 DirectionsRoute route = res.routes[0];
                 if (route.legs !=null) {
-                    System.out.println("len legs" + route.legs.length);
                     for(int i=0; i<route.legs.length; i++) {
                         DirectionsLeg leg = route.legs[i];
+                        System.out.println("legs " + leg.toString());
                         if (leg.steps != null) {
                             for (int j=0; j<leg.steps.length;j++){
                                 DirectionsStep step = leg.steps[j];
-                                if (step.steps != null && step.steps.length >0) {
-                                    for (int k=0; k<step.steps.length;k++){
-                                        List<LatLng> path = new ArrayList<>();
-                                        //used to check whether a landmark was encountered or not
-                                        HashMap<Landmark, Integer> encounteredLandmarks = new HashMap<>();
-                                        double segmentDistance = 0;
+                                System.out.println("steps " + step.toString());
 
-                                        DirectionsStep step1 = step.steps[k];
-                                        EncodedPolyline points1 = step1.polyline;
+                                System.out.println("path");
+                                List<LatLng> path = new ArrayList<>();
+                                //used to check whether a landmark was encountered or not
+                                HashMap<Landmark, Integer> encounteredLandmarks = new HashMap<>();
+                                double segmentDistance = 0;
 
-                                        if (points1 != null) {
-                                            //Decode polyline and add points to list of route coordinates
-                                            List<com.google.maps.model.LatLng> polylineCoords= points1.decodePath();
-                                            LatLng first = new LatLng(polylineCoords.get(0).lat, polylineCoords.get(0).lng);
-                                            LatLng last = new LatLng(polylineCoords.get(polylineCoords.size() -1).lat, polylineCoords.get(polylineCoords.size() -1).lng);
-                                            segmentDistance = Utils.geoDistance(last, first);
-                                            if(segmentDistance == 0){
-                                                continue;
+                                EncodedPolyline pointsInPolyline = step.polyline;
+
+                                if (pointsInPolyline != null) {
+                                    //Decode polyline and add points to list of route coordinates
+                                    List<com.google.maps.model.LatLng> polylineCoords= pointsInPolyline.decodePath();
+                                    System.out.println("len of polycord " + polylineCoords.size());
+                                    LatLng first = new LatLng(polylineCoords.get(0).lat, polylineCoords.get(0).lng);
+                                    LatLng last = new LatLng(polylineCoords.get(polylineCoords.size() -1).lat, polylineCoords.get(polylineCoords.size() -1).lng);
+                                    segmentDistance = Utils.geoDistance(last, first);
+                                    System.out.println("distance: " + segmentDistance);
+                                    if(segmentDistance == 0){
+                                        continue;
+                                    }
+                                    for (com.google.maps.model.LatLng c : polylineCoords) {
+                                        LatLng coord = new LatLng(c.lat, c.lng);
+                                        path.add(coord);
+                                        System.out.println("add to path: " + coord.longitude + "," + coord.longitude);
+                                        for(Landmark landmark: landmarks){
+                                            if(!encounteredLandmarks.containsKey(landmark)) //check for each landmark if it is on the path
+                                            if(Utils.geoDistance(coord, new LatLng(landmark.getLatitude(), landmark.getLongitude())) < 0.003) { //check if landmark is close enough to that position
+                                                // if not already counted, count the landmark adding it to the hashmap
+                                                encounteredLandmarks.put(landmark, 1);
+                                                mMap.addMarker(new MarkerOptions().position(coord));
                                             }
-                                            for (com.google.maps.model.LatLng c : polylineCoords) {
-                                                LatLng coord = new LatLng(c.lat, c.lng);
-                                                path.add(coord);
-
-                                                for(Landmark landmark: landmarks){
-                                                    if(!encounteredLandmarks.containsKey(landmark)) //check for each landmark if it is on the path
-                                                    if(Utils.geoDistance(coord, new LatLng(landmark.getLatitude(), landmark.getLongitude())) < 3) { //check if landmark is close enough to that position
-                                                        // if not already counted, count the landmark adding it to the hashmap
-                                                        encounteredLandmarks.put(landmark, 1);
-                                                        mMap.addMarker(new MarkerOptions().position(coord));
-                                                    }
-                                                }
-                                            }
-                                        }
-
-
-                                        //Draw the polyline
-                                        if (path.size() > 0) {
-                                            // score: number of landmarks per kilometer
-                                            double score = (double) encounteredLandmarks.size() / segmentDistance;
-                                            PolylineOptions opts =new PolylineOptions().addAll(path).width(5);
-                                            if(score < 1) // good score, green polyline
-                                                opts.color(Color.GREEN);
-                                            else if (score < 3) //medium score, orange polyline
-                                                opts.color(Color.rgb(255, 165, 0));
-                                            else
-                                                opts.color(Color.RED);
-                                            mMap.addPolyline(opts);
                                         }
                                     }
+                                }
+
+
+                                //Draw the polyline
+                                if (path.size() > 0) {
+                                    // score: number of landmarks per kilometer
+                                    System.out.println("path > 0 " + path.size());
+                                    double score = (double) encounteredLandmarks.size() / segmentDistance;
+                                    PolylineOptions opts =new PolylineOptions().addAll(path).width(15);
+                                    if(score < 1) // good score, green polyline
+                                        opts.color(Color.GREEN);
+                                    else if (score < 3) //medium score, orange polyline
+                                        opts.color(Color.rgb(255, 165, 0));
+                                    else
+                                        opts.color(Color.RED);
+                                    mMap.addPolyline(opts);
+
+
                                 }
                             }
                         }
@@ -237,5 +212,31 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     }
+
+
+    @SuppressLint("MissingPermission")
+    public void setCurrentPosition(){
+
+
+        LocationRequest locationRequest = Utils.initializeLocationRequest(false);
+
+        System.out.println(locationRequest.getInterval());
+        LocationCallback locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                //Location received
+                Location currentLocation = locationResult.getLastLocation();
+                coordinatesStart = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(coordinatesStart.latitude, coordinatesStart.longitude), 12.0f));
+                mMap.addMarker(new MarkerOptions().position(coordinatesStart).title("Start"));
+                System.out.println("start " + coordinatesStart.latitude + " " + coordinatesStart.longitude);
+            }
+        };
+
+        //perform API call
+        locationClient.requestLocationUpdates(locationRequest, locationCallback, null);
+    }
+
 
 }
