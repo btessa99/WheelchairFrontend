@@ -19,11 +19,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.os.Looper;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,14 +67,18 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     private double lastLat, lastLong;
     private JSONArray ja = new JSONArray();
 
-    private static final String urlString = "https://54b2-131-114-208-187.eu.ngrok.io/locations/update";
+    private static final String urlString = "https://2a31-78-13-106-61.eu.ngrok.io/locations/update";
 
-    private static final int REQUEST_INTERVAL = 30;
+    private static final int REQUEST_INTERVAL = 300;
 
-    int LOCATION_REFRESH_TIME = 5000; // 5 seconds to update
+    int LOCATION_REFRESH_TIME = 2000; // 2 seconds to update
     int LOCATION_REFRESH_DISTANCE = 1; // 1 meters to update
 
-    LocationManager locationManager;
+    //LocationManager locationManager;
+
+    private FusedLocationProviderClient locationClient;
+
+    private LocationCallback locationCallback;
 
     private ScheduledExecutorService scheduleTaskExecutor;
 
@@ -78,7 +89,18 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         initializeViews();
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+       // locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        //initialize client for getting GPS
+        locationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        locationCallback =  new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                // do work here
+                onLocationChanged(locationResult.getLastLocation());
+            }
+        };
 
         if (sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -112,12 +134,28 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     Log.d("TEST", "Permissions are not granted, asking permissions");
                     ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION} , 1);
-
-
                     return;
                 }
                 Log.d("TEST", "Permissions ok");
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, this);
+
+                //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, this);
+
+
+                locationClient.getLastLocation().addOnSuccessListener(this, location -> {
+                    if (location != null) {
+                        lastLat = location.getLatitude();
+                        lastLong = location.getLongitude();
+                        Log.d("TEST", "Last known location: ("+lastLat + ","+ lastLong+")");
+                    }
+                });
+
+                LocationRequest mLocationRequest = new LocationRequest();
+                mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                mLocationRequest.setInterval(LOCATION_REFRESH_TIME);
+                mLocationRequest.setSmallestDisplacement(LOCATION_REFRESH_DISTANCE);
+
+                locationClient.requestLocationUpdates(mLocationRequest, locationCallback, Looper.myLooper());
+
                 sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
                 sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
                 sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
@@ -158,24 +196,29 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
                 sensorManager.unregisterListener(this);
                 sensorManager = null;
                 Log.d("TEST", "unregistered the sensor listener");
+
+                /*
+                if(locationManager!=null){
+                    // unregister the location listener
+                    locationManager.removeUpdates(this);
+                    Log.d("TEST", "unregistered the location listener");
+                }
+                 */
+
+                locationClient.removeLocationUpdates(locationCallback);
+
+                // stop the recurring task that sends the request to the flask-server
+                scheduleTaskExecutor.shutdown();
+
+                Log.d("TEST", "shut down the schedule task executor");
+
+                //sendRecordsToServer();
+                postData();
+                writeToFile();
             }
-
-            if(locationManager!=null){
-                // unregister the location listener
-                locationManager.removeUpdates(this);
-                Log.d("TEST", "unregistered the location listener");
-            }
-
-            // stop the recurring task that sends the request to the flask-server
-            scheduleTaskExecutor.shutdown();
-
-            Log.d("TEST", "shut down the schedule task executor");
-
-            //sendRecordsToServer();
-            postData();
-            writeToFile();
         }
     }
+
 
     public void initializeViews() {
         Button button = findViewById(R.id.startButton);
@@ -191,13 +234,14 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     public void onLocationChanged(Location location){
         lastLat = location.getLatitude();
         lastLong = location.getLongitude();
-        //createRecord();
+        Log.d("LOCATION_CHANGED", "lat: " + lastLat + ", long: "+lastLong);
         createJsonRecord();
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         //Log.d("EVENT", event.sensor.getStringType());
+        /*
         if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             lastAccX = event.values[0];
             lastAccY = event.values[1];
@@ -211,29 +255,9 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             lastMagY = event.values[1];
             lastMagZ = event.values[2];
         } else return;
-        //createRecord();
-        createJsonRecord();
+        createJsonRecord();*/
     }
 
-    public void createRecord(){
-        String timestamp = new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss.SSS").format(new java.util.Date());
-        String record = "{" +
-                "\"timestamp\": \""+ timestamp + "\", " +
-                "\"latitude\": " + lastLat + ", " +
-                "\"longitude\":" + lastLong + ", " +
-                "\"ACC_X\": " + lastAccX + ", " +
-                "\"ACC_Y\": " + lastAccY + ", " +
-                "\"ACC_Z\": " + lastAccZ + ", " +
-                "\"GYR_X\": " + lastGyrX + ", " +
-                "\"GYR_Y\": " + lastGyrY + ", " +
-                "\"GYR_Z\": " + lastGyrZ + ", " +
-                "\"MAG_X\": " + lastMagX + ", " +
-                "\"MAG_Y\": " + lastMagY + ", " +
-                "\"MAG_Z\": " + lastMagZ
-                +"}";
-        records.add(record);
-        //Log.d("RECORD", record);
-    }
 
     public void createJsonRecord(){
         JSONObject jsonParam = new JSONObject();
@@ -362,7 +386,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
                             }
                         } else if (permissions[i].equals(Manifest.permission.ACCESS_FINE_LOCATION)) {
                             if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                                Log.e("msg", "ACCESS_FINE_LOCATION granted");
+                                Log.e("TEST", "ACCESS_FINE_LOCATION granted");
                             }
                         }
                     }

@@ -37,10 +37,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void changeActivity(Class newActivity){
-        Log.d("TEST", "primo log");
         Intent intent = new Intent(MainActivity.this,newActivity);
-        Log.d("TEST", "secondo log");
         startActivity(intent);
-        Log.d("TEST", "terzo log");
     }
 }
