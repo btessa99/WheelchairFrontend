@@ -68,9 +68,9 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
     private JSONArray ja = new JSONArray();
 
-    private static final String urlString = "https://2a31-78-13-106-61.eu.ngrok.io/locations/update";
+    private static final String urlString = "https://ad34-62-205-14-42.eu.ngrok.io/locations/update";
 
-    private static final int REQUEST_INTERVAL = 300;
+    private static final int REQUEST_INTERVAL = 60;
 
     int LOCATION_REFRESH_TIME = 2000; // 2 seconds to update location
     int LOCATION_REFRESH_DISTANCE = 1; // 1 meters to update location
@@ -171,17 +171,12 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
                         // Do stuff here!
                         Log.d("TEST", "inside run()");
 
-                        //sendRecordsToServer();
-
-                        //writeToFile();
-
                         postData();
-                        writeToFile();
+                        // writeToFile();
 
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                // Do stuff to update UI here!
                                 Toast.makeText(getBaseContext(), "Sending data to the server", Toast.LENGTH_SHORT).show();
                             }
                         });
@@ -218,7 +213,6 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
                 //sendRecordsToServer();
                 postData();
-                writeToFile();
             }
         }
     }
@@ -282,8 +276,11 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        Log.i("JSON", jsonParam.toString());
-        ja.put(jsonParam);
+        // Log.i("JSON", jsonParam.toString());
+        synchronized(this) {
+            ja.put(jsonParam);
+        }
+
     }
 
     public void sendRecordsToServer(){
@@ -291,7 +288,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         if (jsonString.equals("")) // check if there is at least 1 record
             return;
 
-        Log.d("TEST", jsonString);
+        // Log.d("TEST", jsonString);
         //sendRequest(jsonString);
         postData();
     }
@@ -309,7 +306,10 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             conn.setDoInput(true);
             //Log.i("JSON Array", ja.toString());
             JSONObject jsonParam = new JSONObject();
-            jsonParam.put("data", ja);
+            synchronized(this) {
+                jsonParam.put("data", ja);
+                ja = new JSONArray();
+            }
             //Log.i("JSON Full", jsonParam.toString());
             DataOutputStream os = new DataOutputStream(conn.getOutputStream());
             //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
@@ -319,7 +319,8 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             Log.i("TEST", "http POST status:" + conn.getResponseCode());
             Log.i("TEST" , "http POST response message" + conn.getResponseMessage());
             conn.disconnect();
-            ja = new JSONArray();
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
