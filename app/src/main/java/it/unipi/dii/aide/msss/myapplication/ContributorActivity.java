@@ -25,10 +25,18 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -50,8 +58,9 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     private float lastGyrX, lastGyrY, lastGyrZ;
     private float lastMagX, lastMagY, lastMagZ;
     private double lastLat, lastLong;
+    private JSONArray ja = new JSONArray();
 
-    private static final String urlString = "https://aec0-78-13-144-147.eu.ngrok.io/locations/update";
+    private static final String urlString = "https://54b2-131-114-208-187.eu.ngrok.io/locations/update";
 
     private static final int REQUEST_INTERVAL = 30;
 
@@ -162,8 +171,8 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
             Log.d("TEST", "shut down the schedule task executor");
 
-            sendRecordsToServer();
-
+            //sendRecordsToServer();
+            postData();
             writeToFile();
         }
     }
@@ -182,7 +191,8 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     public void onLocationChanged(Location location){
         lastLat = location.getLatitude();
         lastLong = location.getLongitude();
-        createRecord();
+        //createRecord();
+        createJsonRecord();
     }
 
     @Override
@@ -201,41 +211,60 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             lastMagY = event.values[1];
             lastMagZ = event.values[2];
         } else return;
-        createRecord();
+        //createRecord();
+        createJsonRecord();
     }
 
     public void createRecord(){
         String timestamp = new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss.SSS").format(new java.util.Date());
         String record = "{" +
-                "'timestamp': "+ timestamp + ", " +
-                "'latitude': " + lastLat + ", " +
-                "'longitude': " + lastLong + ", " +
-                "'ACC_X': " + lastAccX + ", " +
-                "'ACC_Y': " + lastAccY + ", " +
-                "'ACC_Z': " + lastAccZ + ", " +
-                "'GYR_X': " + lastGyrX + ", " +
-                "'GYR_Y': " + lastGyrY + ", " +
-                "'GYR_Z': " + lastGyrZ + ", " +
-                "'MAG_X': " + lastMagX + ", " +
-                "'MAG_Y': " + lastMagY + ", " +
-                "'MAG_Z': " + lastMagZ
+                "\"timestamp\": \""+ timestamp + "\", " +
+                "\"latitude\": " + lastLat + ", " +
+                "\"longitude\":" + lastLong + ", " +
+                "\"ACC_X\": " + lastAccX + ", " +
+                "\"ACC_Y\": " + lastAccY + ", " +
+                "\"ACC_Z\": " + lastAccZ + ", " +
+                "\"GYR_X\": " + lastGyrX + ", " +
+                "\"GYR_Y\": " + lastGyrY + ", " +
+                "\"GYR_Z\": " + lastGyrZ + ", " +
+                "\"MAG_X\": " + lastMagX + ", " +
+                "\"MAG_Y\": " + lastMagY + ", " +
+                "\"MAG_Z\": " + lastMagZ
                 +"}";
         records.add(record);
         //Log.d("RECORD", record);
     }
 
-    public void sendRecordsToServer(){
-
-        String jsonString = serializeRecordList(); // prepare the POST body
-
-        if (jsonString.equals("")) // check if there is at least 1 record
-            return;
-
+    public void createJsonRecord(){
+        JSONObject jsonParam = new JSONObject();
         try {
-            sendRequest(jsonString);
-        } catch (IOException e) {
+            String timestamp = new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss.SSS").format(new java.util.Date());
+            jsonParam.put("timestamp", timestamp);
+            jsonParam.put("latitude",lastLat);
+            jsonParam.put("longitude", lastLong);
+            jsonParam.put("ACC_X", lastAccX);
+            jsonParam.put("ACC_Y", lastAccY);
+            jsonParam.put("ACC_Z", lastAccZ);
+            jsonParam.put("GYR_X", lastGyrX);
+            jsonParam.put("GYR_Y", lastGyrY);
+            jsonParam.put("GYR_Z", lastGyrZ);
+            jsonParam.put("MAG_X", lastMagX);
+            jsonParam.put("MAG_Y", lastMagY);
+            jsonParam.put("MAG_Z", lastMagZ);
+        } catch (JSONException e) {
             e.printStackTrace();
         }
+        Log.i("JSON", jsonParam.toString());
+        ja.put(jsonParam);
+    }
+
+    public void sendRecordsToServer(){
+        String jsonString = serializeRecordList(); // prepare the POST body
+        if (jsonString.equals("")) // check if there is at least 1 record
+            return;
+        Log.d("TEST", jsonString);
+        //sendRequest(jsonString);
+        postData();
     }
     public void sendRequest(String jsonString) throws IOException {
         Log.d("TEST", "sending POST request to server");
@@ -244,16 +273,43 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         HttpURLConnection http = (HttpURLConnection) con;
         http.setDoOutput(true);
         http.setRequestMethod("POST"); // POST request to the flask-server
-
-
         byte[] out = jsonString.getBytes(StandardCharsets.UTF_8);
         int length = out.length;
-
+        Log.d("OUTPUT", jsonString);
         http.setFixedLengthStreamingMode(length);
-        http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        //http.setRequestProperty("Content-Type", "application/json");
         http.connect();
         try (OutputStream os = http.getOutputStream()) {
             os.write(out); // send the JSON to the flask-server
+        }
+    }
+
+    public void postData() {
+        // Create a new HttpClient and Post Header
+        Log.i("D", "POSTDATA");
+        try {
+            URL url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            conn.setRequestProperty("Accept","application/json");
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+            Log.i("JSON Array", ja.toString());
+            JSONObject jsonParam = new JSONObject();
+            jsonParam.put("data", ja);
+            Log.i("JSON Full", jsonParam.toString());
+            DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+            //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
+            os.writeBytes(jsonParam.toString());
+            os.flush();
+            os.close();
+            Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+            Log.i("MSG" , conn.getResponseMessage());
+            conn.disconnect();
+            ja = new JSONArray();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -275,7 +331,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
         records.clear(); // removes all the element of the ArrayList
 
-        return "{'data': [" + serializedList + "]}";
+        return "{\"data\": [" + serializedList + "]}";
     }
 
     public void writeToFile(){
