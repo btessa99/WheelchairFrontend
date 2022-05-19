@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.common.api.Response;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -22,9 +23,13 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 
 import org.gavaghan.geodesy.*;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -40,7 +45,9 @@ import it.unipi.dii.aide.msss.myapplication.entities.Landmark;
 public class Utils {
     private static class RetrieveLandmarks implements Callable<ArrayList<Landmark>> {
 
-        private final String url = "https://0a52-5-171-214-141.eu.ngrok.io/locations/inaccessible";
+        private final String url = "https://5231-82-56-135-29.eu.ngrok.io/locations/inaccessible/scores";
+
+
         @Override
         public ArrayList<Landmark> call() throws Exception {
             return fetchLandmarks();
@@ -54,42 +61,22 @@ public class Utils {
                 connection.setRequestProperty("User-Agent", "my-rest-app-v0.1");
 
 
-                if (connection.getResponseCode() == 200) {
-                    InputStream responseBody = connection.getInputStream();
-                    InputStreamReader responseBodyReader = new InputStreamReader(responseBody, "UTF-8");
-                    JsonReader jsonReader = new JsonReader(responseBodyReader);
-                    jsonReader.beginObject();
-                    double latitude = 0.0;
-                    double longitude = 0.0;
-                    int label = 0, bound = 0;
-                    //find all landmarks returned and store them
-                    while (jsonReader.hasNext()) {
-                        String key = jsonReader.nextName();
-                        switch (key) {
-                            case "latitude":
-                                latitude = jsonReader.nextDouble();
-                                break;
-                            case "longitude":
-                                longitude = jsonReader.nextDouble();
-                                break;
-                            case "score":
-                                label = jsonReader.nextInt();
-                                break;
-                            case "bound":
-                                bound = jsonReader.nextInt();
-                                break;
-                            default:
-                                jsonReader.skipValue();
-                                break;
-                        }
+                Log.d("connect","code: " + connection.getResponseCode());
 
-                        if (latitude != 0.0 && longitude != 0.0 && label != 0 && bound  != 0) {
-                            Landmark newLandmark = new Landmark(latitude, longitude, label, bound);
-                            landmarks.add(newLandmark);
-                            latitude = longitude = 0.0;
-                            label = bound = 0;
-                        }
-                    }
+                if (connection.getResponseCode() == 200) {
+
+                    InputStream responseBody = connection.getInputStream();
+                    System.out.println(responseBody);
+                    InputStreamReader responseBodyReader = new InputStreamReader(responseBody, "UTF-8");
+                    System.out.println(responseBodyReader);
+
+
+
+                    JsonReader jsonReader = new JsonReader(responseBodyReader);
+                    jsonReader.setLenient(true);
+
+                    landmarks = readLandmarksArray(jsonReader);
+
                 } else {
                     // Error handling code goes here
                     System.out.println("server not reachable");
@@ -102,7 +89,77 @@ public class Utils {
 
             return landmarks;
         }
+
+
+        private static ArrayList<Landmark> readLandmarksArray(JsonReader reader) throws IOException {
+
+            ArrayList<Landmark> landmarksRead = new ArrayList<>();
+
+            reader.beginArray();
+            while (reader.hasNext()) {
+                landmarksRead.add(readLandmark(reader));
+            }
+            reader.endArray();
+
+            return landmarksRead;
+        }
+
+        private static Landmark readLandmark(JsonReader jsonReader) throws IOException {
+
+
+
+            double latitude = 0.0;
+            double longitude = 0.0;
+            int label = 0, bound = 0;
+            Log.d("connect","inside if");
+            //find all landmarks returned and store them
+            Landmark newLandmark = new Landmark();
+            jsonReader.beginObject();
+
+
+
+            while (jsonReader.hasNext()) {
+
+
+                String key = jsonReader.nextName();
+                Log.d("json", key);
+                switch (key) {
+                    case "latitude":
+                        latitude = jsonReader.nextDouble();
+                        newLandmark.setLatitude(latitude);
+                        Log.d("json", "latitude  " + latitude);
+                        break;
+                    case "longitude":
+                        longitude = jsonReader.nextDouble();
+                        newLandmark.setLongitude(longitude);
+                        Log.d("json", "latitude  " + longitude);
+                        break;
+                    case "score":
+                        label = jsonReader.nextInt();
+                        newLandmark.setScore(label);
+                        Log.d("json", "score  " + label);
+                        break;
+                    case "bound":
+                        bound = jsonReader.nextInt();
+                        newLandmark.setBound(bound);
+                        Log.d("json", "bound  " + bound);
+                        break;
+                    default:
+                        jsonReader.skipValue();
+                        break;
+                }
+
+
+            }
+
+
+            System.out.println(newLandmark);
+            jsonReader.endObject();
+            return newLandmark;
+        }
+
     }
+
     private static ArrayList<Landmark> landmarks = new ArrayList<>();
 
     public static void setLandmarks(){
@@ -121,72 +178,6 @@ public class Utils {
     }
 
 
-    public static void initializeMap(GoogleMap mMap, ArrayList<Landmark> landmarks,FusedLocationProviderClient client){
-
-
-        //handle clicks on map
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            @Override
-            public void onMapClick(LatLng latLng) {
-                setCamera(latLng,mMap);
-            }
-        });
-
-        placeLandmarks(landmarks,mMap);
-        setGpsLocation(client,mMap);
-    }
-
-
-    private static void placeLandmarks(ArrayList<Landmark> landmarks,GoogleMap mMap){
-
-        //set Landmarks on the Map
-        for(Landmark landmark: landmarks) {
-            LatLng position = new LatLng(landmark.getLatitude(), landmark.getLongitude());
-            // score computation
-            double score = landmark.getScore();
-            double bound = landmark.getBound();
-            double finalScore = Math.abs(score / bound);
-
-            // change the color of the landmark depending on the score:
-            // below 0.7 orange, ahead 0.7 red
-            BitmapDescriptor bitmapDescriptor;
-
-            MarkerOptions options = new MarkerOptions().position(position);
-            if(finalScore < 0.7)
-                bitmapDescriptor = BitmapDescriptorFactory.defaultMarker((int) BitmapDescriptorFactory.HUE_ORANGE);
-            else
-                bitmapDescriptor = BitmapDescriptorFactory.defaultMarker((int) BitmapDescriptorFactory.HUE_RED);
-            options.icon(bitmapDescriptor);
-            mMap.addMarker(options);
-        }
-
-
-    }
-
-    //gets currents GPS position
-    @SuppressLint("MissingPermission")
-    private static void setGpsLocation(FusedLocationProviderClient locationClient, GoogleMap mMap){
-
-        locationClient.getLastLocation()
-                .addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            LatLng position = new LatLng(location.getLatitude(),location.getLongitude());
-                            setCamera(position,mMap);
-                        }
-
-                    }
-                });
-    }
-
-    //change camera focus on map
-    private static void setCamera(LatLng currentPosition,GoogleMap mMap){
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(currentPosition));
-    }
-
     public static double geoDistance(LatLng pointA, LatLng pointB){
         GeodeticCalculator geoCalc = new GeodeticCalculator();
 
@@ -198,17 +189,20 @@ public class Utils {
         return geoCalc.calculateGeodeticCurve(reference, posB, posA).getEllipsoidalDistance();
     }
 
-    public static LocationRequest initializeLocationRequest(){
+    public static LocationRequest initializeLocationRequest(boolean onlyOneUpdate){
 
         LocationRequest req = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(30 * 1000) // set a delay in the request to make sure the GPS
                 //actually returns a location and not null
-                .setFastestInterval(5 * 1000)
-                .setNumUpdates(1);  //we need one update ony
+                .setFastestInterval(5 * 1000);  //we need one update ony
+
+        if(onlyOneUpdate)
+            req.setNumUpdates(1);
 
         return req;
     }
+
 
 
 }

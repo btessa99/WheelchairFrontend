@@ -1,6 +1,8 @@
 package it.unipi.dii.aide.msss.myapplication.entities;
 
-public class Landmark {
+import java.io.Serializable;
+
+public class Landmark implements Serializable {
     double latitude;
     double longitude;
     int score;
@@ -46,5 +48,11 @@ public class Landmark {
 
     public void setBound(int treshold) {
         this.bound = treshold;
+    }
+
+    @Override
+    public String toString(){
+
+        return "Landmark:"+latitude+","+longitude;
     }
 }

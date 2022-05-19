@@ -80,31 +80,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        setCurrentPosition();
     }
-
-    @SuppressLint("MissingPermission")
-    public void setCurrentPosition(){
-
-
-        LocationRequest locationRequest = Utils.initializeLocationRequest();
-
-        LocationCallback locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                super.onLocationResult(locationResult);
-                //Location received
-                /*Location currentLocation = locationResult.getLastLocation();
-                coordinatesStart = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());*/
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(coordinatesStart.latitude, coordinatesStart.longitude), 12.0f));
-                mMap.addMarker(new MarkerOptions().position(coordinatesStart).title("Start"));
-                System.out.println(coordinatesStart.latitude + " " + coordinatesStart.longitude);
-            }
-        };
-
-        //perform API call
-        locationClient.requestLocationUpdates(locationRequest, locationCallback, null);
-        }
 
 
     @Override
@@ -132,15 +108,15 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void designRoute(LatLng coordinatesEnd){
 
         //get current position on GPS
-        setCurrentPosition();
+        //setCurrentPosition();
         System.out.println(coordinatesStart);
 
         //map the start of the path
         LatLng startPoint = null;
         //map the start of the path
-        /*if(coordinatesStart != null)
+        if(coordinatesStart != null)
             startPoint = coordinatesStart;
-        else */
+        else
             startPoint = new LatLng(43.416667, 10.716667); //center of Pisa
 
 
@@ -236,5 +212,31 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     }
+
+
+    @SuppressLint("MissingPermission")
+    public void setCurrentPosition(){
+
+
+        LocationRequest locationRequest = Utils.initializeLocationRequest(false);
+
+        System.out.println(locationRequest.getInterval());
+        LocationCallback locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                //Location received
+                Location currentLocation = locationResult.getLastLocation();
+                coordinatesStart = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(coordinatesStart.latitude, coordinatesStart.longitude), 12.0f));
+                mMap.addMarker(new MarkerOptions().position(coordinatesStart).title("Start"));
+                System.out.println("start " + coordinatesStart.latitude + " " + coordinatesStart.longitude);
+            }
+        };
+
+        //perform API call
+        locationClient.requestLocationUpdates(locationRequest, locationCallback, null);
+    }
+
 
 }
