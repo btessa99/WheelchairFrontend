@@ -65,14 +65,15 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     private float lastGyrX, lastGyrY, lastGyrZ;
     private float lastMagX, lastMagY, lastMagZ;
     private double lastLat, lastLong;
+
     private JSONArray ja = new JSONArray();
 
     private static final String urlString = "https://2a31-78-13-106-61.eu.ngrok.io/locations/update";
 
     private static final int REQUEST_INTERVAL = 300;
 
-    int LOCATION_REFRESH_TIME = 2000; // 2 seconds to update
-    int LOCATION_REFRESH_DISTANCE = 1; // 1 meters to update
+    int LOCATION_REFRESH_TIME = 2000; // 2 seconds to update location
+    int LOCATION_REFRESH_DISTANCE = 1; // 1 meters to update location
 
     //LocationManager locationManager;
 
@@ -80,7 +81,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
     private LocationCallback locationCallback;
 
-    private ScheduledExecutorService scheduleTaskExecutor;
+    private ScheduledExecutorService scheduleTaskExecutor; // timer
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -174,6 +175,9 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
                         //writeToFile();
 
+                        postData();
+                        writeToFile();
+
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -241,7 +245,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
     @Override
     public void onSensorChanged(SensorEvent event) {
         //Log.d("EVENT", event.sensor.getStringType());
-        /*
+
         if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             lastAccX = event.values[0];
             lastAccY = event.values[1];
@@ -255,7 +259,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             lastMagY = event.values[1];
             lastMagZ = event.values[2];
         } else return;
-        createJsonRecord();*/
+        createJsonRecord();
     }
 
 
@@ -286,31 +290,15 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         String jsonString = serializeRecordList(); // prepare the POST body
         if (jsonString.equals("")) // check if there is at least 1 record
             return;
+
         Log.d("TEST", jsonString);
         //sendRequest(jsonString);
         postData();
     }
-    public void sendRequest(String jsonString) throws IOException {
-        Log.d("TEST", "sending POST request to server");
-        URL url = new URL(urlString);
-        URLConnection con = url.openConnection();
-        HttpURLConnection http = (HttpURLConnection) con;
-        http.setDoOutput(true);
-        http.setRequestMethod("POST"); // POST request to the flask-server
-        byte[] out = jsonString.getBytes(StandardCharsets.UTF_8);
-        int length = out.length;
-        Log.d("OUTPUT", jsonString);
-        http.setFixedLengthStreamingMode(length);
-        //http.setRequestProperty("Content-Type", "application/json");
-        http.connect();
-        try (OutputStream os = http.getOutputStream()) {
-            os.write(out); // send the JSON to the flask-server
-        }
-    }
 
     public void postData() {
         // Create a new HttpClient and Post Header
-        Log.i("D", "POSTDATA");
+        Log.i("TEST", "Preparing POST request to send to the server");
         try {
             URL url = new URL(urlString);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -319,17 +307,17 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             conn.setRequestProperty("Accept","application/json");
             conn.setDoOutput(true);
             conn.setDoInput(true);
-            Log.i("JSON Array", ja.toString());
+            //Log.i("JSON Array", ja.toString());
             JSONObject jsonParam = new JSONObject();
             jsonParam.put("data", ja);
-            Log.i("JSON Full", jsonParam.toString());
+            //Log.i("JSON Full", jsonParam.toString());
             DataOutputStream os = new DataOutputStream(conn.getOutputStream());
             //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
             os.writeBytes(jsonParam.toString());
             os.flush();
             os.close();
-            Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-            Log.i("MSG" , conn.getResponseMessage());
+            Log.i("TEST", "http POST status:" + conn.getResponseCode());
+            Log.i("TEST" , "http POST response message" + conn.getResponseMessage());
             conn.disconnect();
             ja = new JSONArray();
         } catch (Exception e) {
