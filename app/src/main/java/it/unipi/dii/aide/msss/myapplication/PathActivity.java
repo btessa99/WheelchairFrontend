@@ -21,6 +21,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -119,11 +121,11 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         else
             startPoint = new LatLng(43.416667, 10.716667); //center of Pisa
 
-
-        mMap.addMarker(new MarkerOptions().position(startPoint).title("Start"));
+        BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.defaultMarker((int) BitmapDescriptorFactory.HUE_BLUE);
+        mMap.addMarker(new MarkerOptions().position(startPoint).title("Start").icon(bitmapDescriptor));
 
         //map the end of the path
-        mMap.addMarker(new MarkerOptions().position(coordinatesEnd).title("End"));
+        mMap.addMarker(new MarkerOptions().position(coordinatesEnd).title("End").icon(bitmapDescriptor));
 
 
         //Execute Directions API request
@@ -227,9 +229,10 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
                 super.onLocationResult(locationResult);
                 //Location received
                 Location currentLocation = locationResult.getLastLocation();
+                BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.defaultMarker((int) BitmapDescriptorFactory.HUE_BLUE);
                 coordinatesStart = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(coordinatesStart.latitude, coordinatesStart.longitude), 12.0f));
-                mMap.addMarker(new MarkerOptions().position(coordinatesStart).title("Start"));
+                mMap.addMarker(new MarkerOptions().position(coordinatesStart).title("Start").icon(bitmapDescriptor));
                 System.out.println("start " + coordinatesStart.latitude + " " + coordinatesStart.longitude);
             }
         };
