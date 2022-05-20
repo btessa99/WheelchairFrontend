@@ -1,34 +1,13 @@
 package it.unipi.dii.aide.msss.myapplication;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.os.Build;
+
 import android.util.JsonReader;
 import android.util.Log;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.RequiresApi;
-import androidx.core.content.ContextCompat;
-
-import com.google.android.gms.common.api.Response;
-import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.gson.Gson;
-import com.google.gson.JsonParser;
 
 import org.gavaghan.geodesy.*;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -45,7 +24,7 @@ import it.unipi.dii.aide.msss.myapplication.entities.Landmark;
 public class Utils {
     private static class RetrieveLandmarks implements Callable<ArrayList<Landmark>> {
 
-        private final String url = "https://5231-82-56-135-29.eu.ngrok.io/locations/inaccessible/scores";
+        private final String url = "https://b2ee-95-74-86-161.eu.ngrok.io/locations/inaccessible/scores";
 
 
         @Override
@@ -56,34 +35,29 @@ public class Utils {
         private ArrayList<Landmark> fetchLandmarks() {
             ArrayList<Landmark> landmarks = new ArrayList<>();
             try {
+
+                //perform HTTP request
                 URL serverEndpoint = new URL(url);
                 HttpURLConnection connection = (HttpURLConnection) serverEndpoint.openConnection();
                 connection.setRequestProperty("User-Agent", "my-rest-app-v0.1");
 
 
-                Log.d("connect","code: " + connection.getResponseCode());
-
+                //connection successful
                 if (connection.getResponseCode() == 200) {
 
+                    //get response body (it's a JSON array)
                     InputStream responseBody = connection.getInputStream();
-                    System.out.println(responseBody);
                     InputStreamReader responseBodyReader = new InputStreamReader(responseBody, "UTF-8");
-                    System.out.println(responseBodyReader);
-
-
 
                     JsonReader jsonReader = new JsonReader(responseBodyReader);
                     jsonReader.setLenient(true);
 
+                    //parse landmark in JSON array
                     landmarks = readLandmarksArray(jsonReader);
 
                 } else {
-                    // Error handling code goes here
+                    // connection failed
                     System.out.println("server not reachable");
-                    // test landmarks
-                    landmarks.add(new Landmark(44.04633, 10.06371, 54, 55));
-                    landmarks.add(new Landmark(44.05, 10.06, 32, 77)); // Gelateria enzo, great peanut Ice Cream
-                    landmarks.add(new Landmark(37.401437,-116.86773, 833334, 833334));
                 }
             }catch (Exception e){e.printStackTrace();}
 
@@ -91,12 +65,14 @@ public class Utils {
         }
 
 
+
         private static ArrayList<Landmark> readLandmarksArray(JsonReader reader) throws IOException {
 
             ArrayList<Landmark> landmarksRead = new ArrayList<>();
 
             reader.beginArray();
-            while (reader.hasNext()) {
+
+            while (reader.hasNext()) { //parses every object of array
                 landmarksRead.add(readLandmark(reader));
             }
             reader.endArray();
@@ -106,23 +82,19 @@ public class Utils {
 
         private static Landmark readLandmark(JsonReader jsonReader) throws IOException {
 
-
-
             double latitude = 0.0;
             double longitude = 0.0;
             int label = 0, bound = 0;
-            Log.d("connect","inside if");
+
             //find all landmarks returned and store them
             Landmark newLandmark = new Landmark();
             jsonReader.beginObject();
 
-
-
             while (jsonReader.hasNext()) {
 
+                //read every single field and build new landmark object
 
                 String key = jsonReader.nextName();
-                Log.d("json", key);
                 switch (key) {
                     case "latitude":
                         latitude = jsonReader.nextDouble();
@@ -151,9 +123,6 @@ public class Utils {
 
 
             }
-
-
-            System.out.println(newLandmark);
             jsonReader.endObject();
             return newLandmark;
         }
@@ -162,6 +131,7 @@ public class Utils {
 
     private static ArrayList<Landmark> landmarks = new ArrayList<>();
 
+    //gets landmark in background
     public static void setLandmarks(){
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Future<ArrayList<Landmark>> newLandmarks = executor.submit(new RetrieveLandmarks());
@@ -178,6 +148,7 @@ public class Utils {
     }
 
 
+    //calculates geodesic distance between two coordinated and return distance in meters
     public static double geoDistance(LatLng pointA, LatLng pointB){
         GeodeticCalculator geoCalc = new GeodeticCalculator();
 
@@ -189,6 +160,7 @@ public class Utils {
         return geoCalc.calculateGeodeticCurve(reference, posB, posA).getEllipsoidalDistance();
     }
 
+    //initializes client for GPS location requests
     public static LocationRequest initializeLocationRequest(){
 
         LocationRequest req = LocationRequest.create()

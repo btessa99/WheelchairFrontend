@@ -12,10 +12,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
     Button contributeButton;
@@ -28,7 +26,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        enableMyLocation();
+        //check if application has the permissions for using GPS
+        checkGPSPermission();
 
         contributeButton = (Button) findViewById(R.id.contribute);
 
@@ -70,20 +69,18 @@ public class MainActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @SuppressLint("MissingPermission")
-    private void enableMyLocation() {
-        // 1. Check if permissions are granted, if so, enable the my location layer
+    private void checkGPSPermission() {
+        // Check if permissions are granted
         Object permission = null;
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED
                 || ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
 
-            Log.d("mytag","PERMISSION ACCEPTED");
             return;
         }
-        Log.d("mytag","PERMISSION NOT ACCEPTED");
 
-        // 2. Otherwise, request location permissions from the user.
+        // Otherwise, request location permissions from the user.
         ActivityResultLauncher<String[]> locationPermissionRequest =
                 registerForActivityResult(new ActivityResultContracts
                                 .RequestMultiplePermissions(), result -> {
@@ -102,12 +99,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                 );
 
-// ...
-
-
-// Before you perform the actual permission request, check whether your app
-// already has the permissions, and whether your app needs to show a permission
-// rationale dialog. For more details, see Request permissions.
         locationPermissionRequest.launch(new String[] {
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION

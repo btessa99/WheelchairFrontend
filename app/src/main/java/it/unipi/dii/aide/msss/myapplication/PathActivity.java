@@ -2,8 +2,6 @@ package it.unipi.dii.aide.msss.myapplication;
 
 import android.annotation.SuppressLint;
 import android.graphics.Color;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,10 +22,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.maps.DirectionsApi;
 import com.google.maps.DirectionsApiRequest;
 import com.google.maps.GeoApiContext;
@@ -35,19 +31,12 @@ import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
 import com.google.maps.model.DirectionsStep;
-
-import com.google.maps.model.Duration;
 import com.google.maps.model.EncodedPolyline;
 import com.google.maps.model.TravelMode;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Properties;
 
 import it.unipi.dii.aide.msss.myapplication.databinding.ActivityMapsBinding;
 import it.unipi.dii.aide.msss.myapplication.entities.Landmark;
@@ -95,7 +84,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         setCurrentPosition();
 
-
+        //handles click on maps
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(@NonNull LatLng latLng) { //calculate route to the selected destination
@@ -112,18 +101,15 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void designRoute(LatLng coordinatesEnd){
 
-        //get current position on GPS
-        //setCurrentPosition();
-        System.out.println(coordinatesStart);
-
-        //map the start of the path
         LatLng startPoint = null;
         //map the start of the path
         if(coordinatesStart != null)
             startPoint = coordinatesStart;
-        else
-            startPoint = new LatLng(43.416667, 10.716667); //center of Pisa
+        else  //in case of error, get coordinates of center of Pisa
+            startPoint = new LatLng(43.416667, 10.716667);
 
+        //map starting and ending point on the map. To distinguish this
+        //landmarks from the other ones, we colored them blue
         BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.defaultMarker((int) BitmapDescriptorFactory.HUE_BLUE);
         mMap.addMarker(new MarkerOptions().position(startPoint).title("Start").icon(bitmapDescriptor));
 
@@ -138,24 +124,21 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         DirectionsApiRequest req = DirectionsApi.getDirections(context, startPoint.latitude+","+startPoint.longitude, coordinatesEnd.latitude+","+coordinatesEnd.longitude)
                 .mode(TravelMode.WALKING); //inizialize request
         try {
+            //parameters to calculate weighted average of the scores of the path
             double pathLength = 0;
             double scorePerPath = 0;
 
             DirectionsResult res = req.await();
             //Loop through legs and steps to get encoded polylines of each step
             if (res.routes != null && res.routes.length > 0) {
-                System.out.println("routes");
-                DirectionsRoute route = res.routes[0];
+                DirectionsRoute route = res.routes[0]; //legs are the unit of path between waypoints.
+                                                        //in this case only 1 leg since we have no waypoints
                 if (route.legs !=null) {
                     for(int i=0; i<route.legs.length; i++) {
                         DirectionsLeg leg = route.legs[i];
-                        System.out.println("legs " + leg.toString());
                         if (leg.steps != null) {
-                            for (int j=0; j<leg.steps.length;j++){
+                            for (int j=0; j<leg.steps.length;j++){ //steps are atomic units of a leg.
                                 DirectionsStep step = leg.steps[j];
-                                System.out.println("steps " + step.toString());
-
-                                System.out.println("path");
                                 List<LatLng> path = new ArrayList<>();
                                 //used to check whether a landmark was encountered or not
                                 HashMap<Landmark, Integer> encounteredLandmarks = new HashMap<>();
@@ -166,18 +149,22 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 if (pointsInPolyline != null) {
                                     //Decode polyline and add points to list of route coordinates
                                     List<com.google.maps.model.LatLng> polylineCoords= pointsInPolyline.decodePath();
-                                    System.out.println("len of polycord " + polylineCoords.size());
+
+                                    //calculate distance from start to destination point of the single step
                                     LatLng first = new LatLng(polylineCoords.get(0).lat, polylineCoords.get(0).lng);
                                     LatLng last = new LatLng(polylineCoords.get(polylineCoords.size() -1).lat, polylineCoords.get(polylineCoords.size() -1).lng);
                                     segmentDistance = Utils.geoDistance(last, first);
-                                    System.out.println("distance: " + segmentDistance);
+
                                     if(segmentDistance == 0){
                                         continue;
                                     }
+
+                                    //add points to the path to later display the polyline
                                     for (com.google.maps.model.LatLng c : polylineCoords) {
                                         LatLng coord = new LatLng(c.lat, c.lng);
                                         path.add(coord);
-                                        System.out.println("add to path: " + coord.longitude + "," + coord.longitude);
+
+                                        //obstacle check
                                         for(Landmark landmark: landmarks){
                                             if(!encounteredLandmarks.containsKey(landmark)) //check for each landmark if it is on the path
                                             if(Utils.geoDistance(coord, new LatLng(landmark.getLatitude(), landmark.getLongitude())) < 10) { //check if landmark is close enough to that position
@@ -196,16 +183,19 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     System.out.println("path > 0 " + path.size());
                                     double score = (double) encounteredLandmarks.size() / (double) segmentDistance * 1000;
 
+                                    //update indexes for weighted average
                                     pathLength += segmentDistance;
                                     scorePerPath += score * segmentDistance;
 
+                                    //each color represents visually the accessibility of a path
+                                    // we chose the colors inspired to a semaphore so it is more intuitive
                                     PolylineOptions opts =new PolylineOptions().addAll(path).width(15);
                                     if(score < 1) // good score, green polyline
                                         opts.color(Color.GREEN);
                                     else if (score < 3) //medium score, orange polyline
                                         opts.color(Color.rgb(255, 165, 0));
                                     else
-                                        opts.color(Color.RED);
+                                        opts.color(Color.RED); // worst situation
                                     mMap.addPolyline(opts);
 
 
@@ -230,7 +220,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
     @SuppressLint("MissingPermission")
     public void setCurrentPosition(){
 
-
+        //periodically update current location of the user
         LocationRequest locationRequest = Utils.initializeLocationRequest();
 
         System.out.println(locationRequest.getInterval());
@@ -244,7 +234,6 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
                 coordinatesStart = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(coordinatesStart.latitude, coordinatesStart.longitude), 12.0f));
                 mMap.addMarker(new MarkerOptions().position(coordinatesStart).title("Start").icon(bitmapDescriptor));
-                System.out.println("start " + coordinatesStart.latitude + " " + coordinatesStart.longitude);
             }
         };
 

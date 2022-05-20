@@ -49,7 +49,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        Log.d("mytag","qui0");
 
         //this textView is used to show routing results only.
         textView = (TextView) findViewById(R.id.textView);
@@ -57,9 +56,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //initialize client for getting GPS
         locationClient = LocationServices.getFusedLocationProviderClient(this);
-        // HTTP connection for retrieving the landmarks
+
+        //get landmarks stored in memory
         landmarks = Utils.getLandmarks();
-        Log.d("mytag","qui " + landmarks.size());
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -136,8 +136,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setGpsLocation(){
 
         // initialize parameters for location request
-
-        Log.d("mytag","SON QUI");
         locationRequest = Utils.initializeLocationRequest();
         Log.d("mytag",locationRequest.toString());
 
@@ -147,11 +145,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onLocationResult(LocationResult locationResult) {
                 super.onLocationResult(locationResult);
                 //Location received
-                Log.d("mytag",locationResult.getLastLocation().toString());
                 Location currentLocation = locationResult.getLastLocation();
-                //LatLng currentCoordinates = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
-                //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentCoordinates.latitude, currentCoordinates.longitude), 12.0f));
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.latitude, location.longitude), 12.0f));
+                LatLng currentCoordinates = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentCoordinates.latitude, currentCoordinates.longitude), 12.0f));
             }
         };
 
