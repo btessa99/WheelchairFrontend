@@ -81,6 +81,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
         textView = (TextView) findViewById(R.id.textView);
+        textView.setText("CLICK ON THE MAP TO DISCOVER YOUR ROUTE!");
 
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
