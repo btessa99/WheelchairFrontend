@@ -59,7 +59,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ArrayList<Landmark> landmarks = new ArrayList<>();
     private FusedLocationProviderClient locationClient;
     private final String API_KEY = "AIzaSyDEM0FFaaLAtaux54IVvpSP8RlDdJ_q-SE";
-
+    private TextView textView;
     private LatLng coordinatesStart =  new LatLng(43.724591,10.382981);
 
 
@@ -79,6 +79,8 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        textView = (TextView) findViewById(R.id.textView);
 
         locationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -135,6 +137,9 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
         DirectionsApiRequest req = DirectionsApi.getDirections(context, startPoint.latitude+","+startPoint.longitude, coordinatesEnd.latitude+","+coordinatesEnd.longitude)
                 .mode(TravelMode.WALKING); //inizialize request
         try {
+            double pathLength = 0;
+            double scorePerPath = 0;
+
             DirectionsResult res = req.await();
             //Loop through legs and steps to get encoded polylines of each step
             if (res.routes != null && res.routes.length > 0) {
@@ -189,6 +194,10 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     // score: number of landmarks per kilometer
                                     System.out.println("path > 0 " + path.size());
                                     double score = (double) encounteredLandmarks.size() / (double) segmentDistance * 1000;
+
+                                    pathLength += segmentDistance;
+                                    scorePerPath += score * segmentDistance;
+
                                     PolylineOptions opts =new PolylineOptions().addAll(path).width(15);
                                     if(score < 1) // good score, green polyline
                                         opts.color(Color.GREEN);
@@ -205,6 +214,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 }
             }
+            textView.setText("THE INACCESSIBILITY SCORE OF THIS PATH IS " + scorePerPath/pathLength);
         } catch(Exception ex) {
             Log.e("myMess", ex.getLocalizedMessage());
         }
@@ -220,7 +230,7 @@ public class PathActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void setCurrentPosition(){
 
 
-        LocationRequest locationRequest = Utils.initializeLocationRequest(false);
+        LocationRequest locationRequest = Utils.initializeLocationRequest();
 
         System.out.println(locationRequest.getInterval());
         LocationCallback locationCallback = new LocationCallback() {

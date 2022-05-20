@@ -45,7 +45,7 @@ import it.unipi.dii.aide.msss.myapplication.entities.Landmark;
 public class Utils {
     private static class RetrieveLandmarks implements Callable<ArrayList<Landmark>> {
 
-        private final String url = "https://ad34-62-205-14-42.eu.ngrok.io/locations/inaccessible/scores";
+        private final String url = "https://5231-82-56-135-29.eu.ngrok.io/locations/inaccessible/scores";
 
 
         @Override
@@ -189,16 +189,13 @@ public class Utils {
         return geoCalc.calculateGeodeticCurve(reference, posB, posA).getEllipsoidalDistance();
     }
 
-    public static LocationRequest initializeLocationRequest(boolean onlyOneUpdate){
+    public static LocationRequest initializeLocationRequest(){
 
         LocationRequest req = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(30 * 1000) // set a delay in the request to make sure the GPS
                 //actually returns a location and not null
                 .setFastestInterval(5 * 1000);  //we need one update ony
-
-        if(onlyOneUpdate)
-            req.setNumUpdates(1);
 
         return req;
     }

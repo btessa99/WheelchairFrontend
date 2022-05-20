@@ -1,20 +1,16 @@
 package it.unipi.dii.aide.msss.myapplication;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.JsonReader;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -23,20 +19,13 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 import it.unipi.dii.aide.msss.myapplication.databinding.ActivityMapsBinding;
@@ -51,6 +40,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LatLng location = new LatLng(43.724591,10.382981);
     private boolean permissionDenied = false;
     private LocationRequest locationRequest;
+    private TextView textView;
 
 
     @Override
@@ -61,6 +51,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setContentView(binding.getRoot());
         Log.d("mytag","qui0");
 
+        //this textView is used to show routing results only.
+        textView = (TextView) findViewById(R.id.textView);
+        textView.setVisibility(View.INVISIBLE);
 
         //initialize client for getting GPS
         locationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -71,13 +64,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-        if(mMap != null) {
-            System.out.println(
-                    "pronto"
-            );
-            setGpsLocation();
-        }
 
 
 
@@ -152,7 +138,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // initialize parameters for location request
 
         Log.d("mytag","SON QUI");
-        locationRequest = Utils.initializeLocationRequest(true);
+        locationRequest = Utils.initializeLocationRequest();
         Log.d("mytag",locationRequest.toString());
 
 
@@ -163,7 +149,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //Location received
                 Log.d("mytag",locationResult.getLastLocation().toString());
                 Location currentLocation = locationResult.getLastLocation();
-                LatLng currentCoordinates = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
+                //LatLng currentCoordinates = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
                 //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentCoordinates.latitude, currentCoordinates.longitude), 12.0f));
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.latitude, location.longitude), 12.0f));
             }

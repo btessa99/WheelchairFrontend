@@ -104,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
 // ...
 
+
 // Before you perform the actual permission request, check whether your app
 // already has the permissions, and whether your app needs to show a permission
 // rationale dialog. For more details, see Request permissions.

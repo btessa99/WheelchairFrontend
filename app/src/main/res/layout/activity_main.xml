@@ -6,7 +6,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/pisa_map"
+    android:background="@drawable/homepage"
     >
 
 
@@ -14,13 +14,9 @@
         android:id="@+id/contribute"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-
-        android:layout_marginStart="64dp"
-        android:layout_marginTop="95dp"
-        android:layout_marginEnd="15dp"
-        android:layout_marginBottom="385dp"
-
-        android:backgroundTint="#47BA5F"
+        android:layout_marginStart="148dp"
+        android:layout_marginTop="105dp"
+        android:backgroundTint="#65B38B"
         android:bottomLeftRadius="8dp"
         android:bottomRightRadius="8dp"
         android:fontFamily="@font/biryani_extralight"
@@ -28,22 +24,16 @@
         android:textColor="@color/white"
         android:topLeftRadius="8dp"
         android:topRightRadius="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/path"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/textView" />
 
     <Button
         android:id="@+id/path"
         android:layout_width="130dp"
         android:layout_height="49dp"
-
-        android:layout_marginStart="15dp"
-        android:layout_marginTop="95dp"
-        android:layout_marginEnd="64dp"
-        android:layout_marginBottom="385dp"
-        android:backgroundTint="#47BA5F"
+        android:layout_marginStart="152dp"
+        android:layout_marginTop="38dp"
+        android:backgroundTint="#65B38B"
         android:bottomLeftRadius="8dp"
         android:bottomRightRadius="8dp"
         android:fontFamily="@font/biryani_extralight"
@@ -51,21 +41,16 @@
         android:textColor="@color/white"
         android:topLeftRadius="8dp"
         android:topRightRadius="8dp"
-
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/contribute"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/explore" />
 
     <Button
         android:id="@+id/explore"
         android:layout_width="141dp"
         android:layout_height="45dp"
-        android:layout_marginStart="165dp"
-        android:layout_marginTop="52dp"
-        android:layout_marginEnd="161dp"
-        android:backgroundTint="#47BA5F"
+        android:layout_marginStart="144dp"
+        android:layout_marginTop="35dp"
+        android:backgroundTint="#65B38B"
         android:bottomLeftRadius="8dp"
         android:bottomRightRadius="8dp"
         android:fontFamily="@font/biryani_extralight"
@@ -73,28 +58,20 @@
         android:textColor="@color/white"
         android:topLeftRadius="8dp"
         android:topRightRadius="8dp"
-
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.59"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/contribute" />
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="77dp"
+        android:layout_width="301dp"
+        android:layout_height="89dp"
         android:layout_marginStart="64dp"
-        android:layout_marginTop="128dp"
-        android:layout_marginEnd="64dp"
+        android:layout_marginTop="36dp"
         android:fontFamily="@font/biryani_bold"
         android:text="@string/app_name"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textColor="#001C06"
+        android:textColor="#65B38B"
         android:textSize="48sp"
-        app:layout_constraintBottom_toTopOf="@+id/contribute"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
