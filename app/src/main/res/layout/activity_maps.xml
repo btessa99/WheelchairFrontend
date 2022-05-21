@@ -18,14 +18,15 @@
     android:layout_width="match_parent"
     android:layout_height="50dp"
     android:orientation="vertical"
-    android:layout_gravity="bottom"
+    android:layout_gravity="top"
     >
-    <TextView
-        android:id="@+id/textView"
-        android:background="@android:color/white"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:textColor="@color/black"
-        />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/white"
+            android:textAlignment="center"
+            android:textColor="#1E3F63" />
     </LinearLayout>
 </FrameLayout>
