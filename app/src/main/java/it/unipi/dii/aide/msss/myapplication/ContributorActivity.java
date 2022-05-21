@@ -10,12 +10,6 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
-
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
-
 import android.os.Looper;
 import android.os.StrictMode;
 import android.util.Log;
@@ -34,42 +28,38 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 
 public class ContributorActivity extends AppCompatActivity implements SensorEventListener, View.OnClickListener, LocationListener {
     private SensorManager sensorManager;
     private Sensor accelerometer, gyroscope, magnetometer;
 
-    private List<String> records;
     private float lastAccX, lastAccY, lastAccZ;
     private float lastGyrX, lastGyrY, lastGyrZ;
     private float lastMagX, lastMagY, lastMagZ;
     private double lastLat, lastLong;
 
-    private JSONArray ja = new JSONArray();
+    private JSONArray ja = new JSONArray(); // list of recorded records
 
-    private static final String urlString = "https://ad34-62-205-14-42.eu.ngrok.io/locations/update";
+    private static final String SERVER_IP = "https://ad34-62-205-14-42.eu.ngrok.io";
+    private static final String PATH = "/locations/update";
 
-    private static final int REQUEST_INTERVAL = 60;
+    private static final int REQUEST_INTERVAL = 60; // every 60sec the app sends records to the server
 
     int LOCATION_REFRESH_TIME = 2000; // 2 seconds to update location
     int LOCATION_REFRESH_DISTANCE = 1; // 1 meters to update location
 
-    //LocationManager locationManager;
 
     private FusedLocationProviderClient locationClient;
-
     private LocationCallback locationCallback;
 
     private ScheduledExecutorService scheduleTaskExecutor; // timer
@@ -81,7 +71,6 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         initializeViews();
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-       // locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         //initialize client for getting GPS
         locationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -89,7 +78,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         locationCallback =  new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
-                // do work here
+                // location has changed
                 onLocationChanged(locationResult.getLastLocation());
             }
         };
@@ -117,22 +106,22 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         if (v.getId() == R.id.startButton) {
             Toast.makeText(getBaseContext(), "Starting the recording", Toast.LENGTH_LONG).show();
             Log.d("TEST", "Starting the recording");
-            records = new ArrayList<>();
+
             if (sensorManager == null) {
                 Log.d("TEST", "Initializing sensor manager");
 
                 sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
+                // checking if location permissions are granted or not
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     Log.d("TEST", "Permissions are not granted, asking permissions");
                     ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION} , 1);
                     return;
                 }
-                Log.d("TEST", "Permissions ok");
 
-                //locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, this);
+                Log.d("TEST", "Permissions already granted");
 
-
+                // setting last known location
                 locationClient.getLastLocation().addOnSuccessListener(this, location -> {
                     if (location != null) {
                         lastLat = location.getLatitude();
@@ -146,24 +135,26 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
                 mLocationRequest.setInterval(LOCATION_REFRESH_TIME);
                 mLocationRequest.setSmallestDisplacement(LOCATION_REFRESH_DISTANCE);
 
+                // setting the location client to receive location updates from GPS
                 locationClient.requestLocationUpdates(mLocationRequest, locationCallback, Looper.myLooper());
 
+                // registering sensor listeners to sense vibration data
                 sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
                 sensorManager.registerListener(this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
                 sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
 
-
                 Log.d("TEST", "initialized sensors and location manager");
 
+
+                // scheduling a new runnable every 60sec to send collected data to the server
                 scheduleTaskExecutor = Executors.newScheduledThreadPool(2);
                 scheduleTaskExecutor.scheduleAtFixedRate(new Runnable() {
                     @Override
                     public void run() {
-                        // Do stuff here!
                         Log.d("TEST", "inside run()");
 
+                        // send data to the server
                         postData();
-                        // writeToFile();
 
                         runOnUiThread(new Runnable() {
                             @Override
@@ -176,25 +167,18 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
                 }, REQUEST_INTERVAL, REQUEST_INTERVAL, TimeUnit.SECONDS);
             }
 
-        } else if(v.getId() == R.id.stopButton){
+        } else if(v.getId() == R.id.stopButton){ // click on STOP button
             Log.d("TEST", "STOP contribution");
 
             Toast.makeText(getBaseContext(), "Stopping the recording", Toast.LENGTH_LONG).show();
 
-            if(sensorManager != null) {
-                // unregister the sensor listener
+            if(sensorManager != null) { // checking if START button was clicked or not
+                // unregistering the sensor listener
                 sensorManager.unregisterListener(this);
                 sensorManager = null;
                 Log.d("TEST", "unregistered the sensor listener");
 
-                /*
-                if(locationManager!=null){
-                    // unregister the location listener
-                    locationManager.removeUpdates(this);
-                    Log.d("TEST", "unregistered the location listener");
-                }
-                 */
-
+                // unregistering the reception of location updates
                 locationClient.removeLocationUpdates(locationCallback);
 
                 // stop the recurring task that sends the request to the flask-server
@@ -202,7 +186,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
                 Log.d("TEST", "shut down the schedule task executor");
 
-                //sendRecordsToServer();
+                // send data to the server
                 postData();
             }
         }
@@ -210,6 +194,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
 
     public void initializeViews() {
+        // initializes the buttons of the UI
         Button button = findViewById(R.id.startButton);
         button.setOnClickListener(this);
         button = findViewById(R.id.stopButton);
@@ -221,16 +206,18 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
     @Override
     public void onLocationChanged(Location location){
+        // location has changed
         lastLat = location.getLatitude();
         lastLong = location.getLongitude();
         Log.d("LOCATION_CHANGED", "lat: " + lastLat + ", long: "+lastLong);
+
+        // saving the json object relative to the collected record
         createJsonRecord();
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        //Log.d("EVENT", event.sensor.getStringType());
-
+        // a sensor changed its value
         if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             lastAccX = event.values[0];
             lastAccY = event.values[1];
@@ -244,11 +231,15 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             lastMagY = event.values[1];
             lastMagZ = event.values[2];
         } else return;
+
+        // saving the json object relative to the collected record
         createJsonRecord();
     }
 
 
     public void createJsonRecord(){
+
+        // creating a new json object for the collected record
         JSONObject jsonParam = new JSONObject();
         try {
             String timestamp = new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss.SSS").format(new java.util.Date());
@@ -267,27 +258,19 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        // Log.i("JSON", jsonParam.toString());
-        synchronized(this) {
+
+        // inserting the collected record into the array of records
+        synchronized(this) { // synchronization is needed since the scheduled job will access "ja"
             ja.put(jsonParam);
         }
 
     }
 
-    public void sendRecordsToServer(){
-        String jsonString = serializeRecordList(); // prepare the POST body
-        if (jsonString.equals("")) // check if there is at least 1 record
-            return;
-
-        // Log.d("TEST", jsonString);
-        //sendRequest(jsonString);
-        postData();
-    }
-
     public void postData() {
-        // Create a new HttpClient and Post Header
         Log.i("TEST", "Preparing POST request to send to the server");
         try {
+            // creating http connection to the server
+            String urlString = SERVER_IP + PATH;
             URL url = new URL(urlString);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
@@ -295,59 +278,25 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
             conn.setRequestProperty("Accept","application/json");
             conn.setDoOutput(true);
             conn.setDoInput(true);
-            //Log.i("JSON Array", ja.toString());
+
+            // preparing the JSON object to send to the server
             JSONObject jsonParam = new JSONObject();
             synchronized(this) {
                 jsonParam.put("data", ja);
                 ja = new JSONArray();
             }
-            //Log.i("JSON Full", jsonParam.toString());
+
+            // sending the JSON object containing the collected data to the server
             DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-            //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
             os.writeBytes(jsonParam.toString());
             os.flush();
             os.close();
+
             Log.i("TEST", "http POST status:" + conn.getResponseCode());
             Log.i("TEST" , "http POST response message" + conn.getResponseMessage());
+
             conn.disconnect();
-
-
         } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public String serializeRecordList() {
-        String serializedList;
-
-        Log.d("TEST", "serializing " + records.size() + " records");
-
-        //Log.d("PRINT", String.valueOf(records));
-        if (records.isEmpty()) // check if there is at least 1 record
-            return "";
-
-        serializedList = (String) records.get(0);
-        records.remove(0);
-
-        for (Object r : records) {
-            serializedList = serializedList + ", " + r; // records concatenation
-        }
-
-        records.clear(); // removes all the element of the ArrayList
-
-        return "{\"data\": [" + serializedList + "]}";
-    }
-
-    public void writeToFile(){
-        Log.d("TEST", "writing records to file");
-        String content = serializeRecordList() + '\n';
-        File path = getApplicationContext().getFilesDir();
-
-        try {
-            FileOutputStream writer = new FileOutputStream(new File(path,"records.txt"), true);
-            writer.write(content.getBytes());
-            writer.close();
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }

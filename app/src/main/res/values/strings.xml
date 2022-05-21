@@ -8,5 +8,5 @@
     <string name="contributor_advices">Your phone should stay in your pocket during the recording!</string>
     <string name="title_activity_contributor">Contribute</string>
     <string name="path_button">Route</string>
-
+    <string name="phone_in_pocket">Phone in pocket</string>
 </resources>
