@@ -3,11 +3,10 @@
     <string name="title_activity_maps">MapsActivity</string>
     <string name="contribute_button">Contribute</string>
     <string name="explore_button">Explore</string>
-    <string name="path_button">FInd your way</string>
     <string name="stop">stop</string>
     <string name="start">start</string>
-    <string name="contributor_advices">Your phone should stay in your pocket during the recording!</string>
+    <string name="contributor_advices">Thanks for contributing, your phone should stay in your pocket during the recording!</string>
     <string name="title_activity_contributor">Contribute</string>
     <string name="path_button">Route</string>
-
+    <string name="phone_in_pocket">Phone in pocket</string>
 </resources>
