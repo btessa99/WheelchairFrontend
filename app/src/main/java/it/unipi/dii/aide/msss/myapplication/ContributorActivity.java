@@ -50,7 +50,7 @@ public class ContributorActivity extends AppCompatActivity implements SensorEven
 
     private JSONArray ja = new JSONArray(); // list of recorded records
 
-    private static final String SERVER_IP = "https://ad34-62-205-14-42.eu.ngrok.io";
+    private static final String SERVER_IP = "https://3030-2-198-79-124.eu.ngrok.io";
     private static final String PATH = "/locations/update";
 
     private static final int REQUEST_INTERVAL = 60; // every 60sec the app sends records to the server

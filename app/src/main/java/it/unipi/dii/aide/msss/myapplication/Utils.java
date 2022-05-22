@@ -24,7 +24,7 @@ import it.unipi.dii.aide.msss.myapplication.entities.Landmark;
 public class Utils {
     private static class RetrieveLandmarks implements Callable<ArrayList<Landmark>> {
 
-        private final String url = "https://b2ee-95-74-86-161.eu.ngrok.io/locations/inaccessible/scores";
+        private final String url = "https://3030-2-198-79-124.eu.ngrok.io/locations/inaccessible/scores";
 
 
         @Override
